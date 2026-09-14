@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>台风数据</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script type="importmap">
+    { "imports": { "@material/web/": "https://esm.sh/@material/web@2.0.0/" } }
+</script>
+<script type="module">
+    import '@material/web/all.js';
+</script>
+<style>
+:root {
+    --md-sys-color-primary: #6750A4;
+    --md-sys-color-on-primary: #FFFFFF;
+    --md-sys-color-primary-container: #EADDFF;
+    --md-sys-color-on-primary-container: #21005D;
+    --md-sys-color-secondary-container: #E8DEF8;
+    --md-sys-color-on-secondary-container: #1D192B;
+    --md-sys-color-surface: #FEF7FF;
+    --md-sys-color-on-surface: #1D1B20;
+    --md-sys-color-surface-container: #F3EDF7;
+    --md-sys-color-surface-container-high: #ECE6F0;
+    --md-sys-color-on-surface-variant: #49454F;
+    --md-sys-color-outline: #79747E;
+    --md-sys-color-outline-variant: #CAC4D0;
+    --md-sys-color-error: #B3261E;
+    --md-sys-shape-corner-small: 8px;
+    --md-sys-shape-corner-medium: 12px;
+    --md-sys-shape-corner-large: 16px;
+    --md-sys-shape-corner-extra-large: 28px;
+    --app-font-family: 'Google Sans', 'Roboto', 'Noto Sans SC', 'Noto Sans JP', system-ui, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--app-font-family); -webkit-tap-highlight-color: transparent; }
+body { background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 32px; }
+body.no-scroll { overflow: hidden; }
+
+/* 顶部栏 */
+.top-app-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px;
+    position: sticky; top: 0;
+    background: var(--md-sys-color-surface);
+    z-index: 30;
+    min-height: 64px;
+}
+.top-left { display: flex; align-items: center; gap: 4px; }
+.app-title { font-size: 22px; font-weight: 500; display: flex; align-items: center; gap: 8px; line-height: 28px; }
+.app-title .material-symbols-outlined { color: var(--md-sys-color-primary); font-size: 24px; font-variation-settings: 'FILL' 1; }
+.top-actions { display: flex; align-items: center; gap: 4px; }
+
+/* 主内容 */
+.main-content { flex: 1; padding: 0 16px; max-width: 800px; margin: 0 auto; width: 100%; }
+.count-bar {
+    text-align: center;
+    font-size: 12px;
+    color: var(--md-sys-color-on-surface-variant);
+    padding: 8px 0 12px;
+    opacity: 0.7;
+    line-height: 16px;
+}
+
+/* 台风卡片：横向布局 */
+.typhoon-card {
+    position: relative;
+    background: var(--md-sys-color-surface-container);
+    border-radius: var(--md-sys-shape-corner-large);
+    padding: 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+    animation: fadeIn 0.3s ease;
+    overflow: hidden;
+}
+.typhoon-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--md-sys-color-on-surface);
+    opacity: 0;
+    transition: opacity 0.15s;
+    pointer-events: none;
+    border-radius: inherit;
+}
+.typhoon-card:hover::before { opacity: 0.08; }
+.typhoon-card:active::before { opacity: 0.12; }
+.typhoon-card:hover { background: var(--md-sys-color-surface-container-high); }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.ty-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    position: relative;
+    z-index: 1;
+}
+.ty-card-name {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 24px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--md-sys-color-on-surface);
+}
+.ty-card-name .material-symbols-outlined {
+    font-size: 22px;
+    color: var(--md-sys-color-primary);
+    font-variation-settings: 'FILL' 1;
+}
+.ty-card-no {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface-variant);
+    background: var(--md-sys-color-surface-container-high);
+    padding: 3px 10px;
+    border-radius: 999px;
+    line-height: 16px;
+}
+
+.ty-badge-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 10px;
+    position: relative;
+    z-index: 1;
+}
+.ty-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 999px;
+    line-height: 18px;
+}
+.ty-badge .material-symbols-outlined { font-size: 14px; }
+
+.ty-info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--md-sys-color-on-surface-variant);
+    line-height: 18px;
+    margin-bottom: 4px;
+    position: relative;
+    z-index: 1;
+}
+.ty-info-row:last-child { margin-bottom: 0; }
+.ty-info-row .info-icon {
+    font-size: 15px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+.ty-info-row .info-text { flex: 1; word-break: break-word; }
+
+/* 空状态 / 加载 */
+.loading-center { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; gap: 16px; color: var(--md-sys-color-on-surface-variant); font-size: 14px; }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--md-sys-color-on-surface-variant); }
+.empty-state .material-symbols-outlined { font-size: 64px; color: var(--md-sys-color-outline-variant); margin-bottom: 16px; }
+.empty-state h3 { font-size: 16px; margin-bottom: 8px; color: var(--md-sys-color-on-surface); font-weight: 500; }
+
+/* 详情 Bottom Sheet */
+.detail-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.32);
+    z-index: 300;
+    display: none; align-items: flex-end; justify-content: center;
+}
+.detail-overlay.show { display: flex; }
+
+.detail-sheet {
+    background: var(--md-sys-color-surface);
+    width: 100%; max-width: 600px; max-height: 88vh;
+    border-top-left-radius: 28px; border-top-right-radius: 28px;
+    display: flex; flex-direction: column;
+    transform: translateY(100%);
+    animation: sheetUp 0.35s cubic-bezier(0.2, 0, 0, 1) forwards;
+    overflow: hidden;
+    transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+.detail-sheet.dragging { transition: none; }
+.detail-sheet.closing { animation: sheetDown 0.3s cubic-bezier(0.4, 0, 1, 1) forwards; }
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes sheetDown { from { transform: translateY(0); } to { transform: translateY(100%); } }
+
+.detail-handle {
+    width: 100%;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: grab;
+    touch-action: none;
+}
+.detail-handle::before {
+    content: '';
+    width: 40px;
+    height: 4px;
+    background: var(--md-sys-color-outline-variant);
+    border-radius: 2px;
+    display: block;
+}
+.detail-handle:active { cursor: grabbing; }
+
+.detail-header { display: flex; align-items: center; justify-content: space-between; padding: 0 16px 4px; flex-shrink: 0; }
+.detail-title-text { font-size: 16px; font-weight: 500; color: var(--md-sys-color-on-surface); line-height: 24px; }
+.detail-content { flex: 1; overflow-y: auto; padding: 8px 20px 32px; }
+
+.ty-detail-hero {
+    text-align: center;
+    padding: 12px 0 20px;
+}
+.ty-detail-hero .ty-hero-icon {
+    font-size: 56px;
+    color: var(--md-sys-color-primary);
+    font-variation-settings: 'FILL' 1;
+}
+.ty-detail-hero .ty-hero-name {
+    font-size: 22px;
+    font-weight: 700;
+    margin-top: 8px;
+    line-height: 28px;
+}
+.ty-detail-hero .ty-hero-no {
+    font-size: 13px;
+    color: var(--md-sys-color-on-surface-variant);
+    margin-top: 4px;
+}
+
+.detail-field {
+    display: flex; gap: 10px;
+    padding: 12px 0;
+    font-size: 14px; line-height: 20px; align-items: flex-start;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+.detail-field:last-child { border-bottom: none; }
+.detail-field .field-label { color: var(--md-sys-color-on-surface-variant); flex-shrink: 0; min-width: 90px; }
+.detail-field .field-value { color: var(--md-sys-color-on-surface); flex: 1; word-break: break-word; }
+
+.path-section-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 20px 0 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--md-sys-color-on-surface);
+}
+.path-section-title .material-symbols-outlined {
+    font-size: 18px;
+    color: var(--md-sys-color-primary);
+}
+.path-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    line-height: 18px;
+}
+.path-table th {
+    text-align: left;
+    padding: 8px 6px;
+    color: var(--md-sys-color-on-surface-variant);
+    font-weight: 500;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    white-space: nowrap;
+}
+.path-table td {
+    padding: 8px 6px;
+    color: var(--md-sys-color-on-surface);
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    white-space: nowrap;
+}
+.path-table tr:last-child td { border-bottom: none; }
+.path-table .path-forecast td {
+    color: var(--md-sys-color-primary);
+}
+
+md-icon { font-family: 'Material Symbols Outlined'; font-size: 24px; display: inline-flex; align-items: center; justify-content: center; }
+
+.detail-overlay {
+    background: rgba(0,0,0,0.05);
+}
+
+.detail-sheet {
+    background: rgba(254,247,255,0.20);   /* ← 从 0.7 降到 0.45 */
+    backdrop-filter: blur(36px) saturate(180%);
+    -webkit-backdrop-filter: blur(36px) saturate(180%);
+}
+
+/* 地图容器 */
+.ty-map-wrap {
+    width: 100%;
+    height: 320px;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    background: var(--md-sys-color-surface-container);
+    position: relative;
+    z-index: 1;
+}
+.ty-map-wrap .leaflet-container {
+    width: 100%;
+    height: 100%;
+    background: #E8EAF0;
+}
+
+/* 地图上的路径点标记 */
+.ty-marker {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+.ty-marker.current {
+    width: 18px;
+    height: 18px;
+    border-width: 3px;
+    animation: tyPulse 1.5s infinite;
+}
+@keyframes tyPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(103,80,164,0.6); }
+    50% { box-shadow: 0 0 0 10px rgba(103,80,164,0); }
+}
+
+.full-screen-settings {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--md-sys-color-surface); z-index: 400;
+    display: none; flex-direction: column;
+    overflow: hidden;
+}
+.full-screen-settings.show {
+    display: flex;
+    animation: sheetUp 0.35s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+.full-screen-settings.closing {
+    animation: sheetDown 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+.settings-top-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; flex-shrink: 0;
+    min-height: 64px;
+}
+.settings-top-bar .title { font-size: 22px; font-weight: 500; line-height: 28px; }
+.settings-content {
+    flex: 1; overflow-y: auto;
+    padding: 16px 24px 120px 24px;
+    display: flex; flex-direction: column; gap: 24px;
+}
+.md-input-group { display: flex; flex-direction: column; gap: 8px; }
+.md-input-group label { font-size: 14px; font-weight: 500; color: var(--md-sys-color-on-surface-variant); line-height: 20px; }
+.md-input-group .hint { font-size: 12px; color: var(--md-sys-color-on-surface-variant); line-height: 16px; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.disclaimer {
+    background: var(--md-sys-color-surface-container);
+    border-radius: 12px;
+    padding: 16px; font-size: 14px;
+    color: var(--md-sys-color-on-surface-variant); line-height: 20px;
+}
+.disclaimer strong { color: var(--md-sys-color-error); display: block; margin-bottom: 6px; font-size: 14px; }
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+</style>
+</head>
+<body>
+
+<header class="top-app-bar">
+    <div class="top-left">
+        <div class="app-title">
+            <span class="material-symbols-outlined">cyclone</span>
+            台风数据
+        </div>
+    </div>
+    <div class="top-actions">
+    <md-icon-button onclick="loadAll()" aria-label="刷新">
+        <md-icon>refresh</md-icon>
+    </md-icon-button>
+    <md-icon-button onclick="openSettings()" aria-label="设置">
+        <md-icon>settings</md-icon>
+    </md-icon-button>
+</div>
+</header>
+
+<main class="main-content" id="mainContent">
+    <div class="loading-center">
+        <md-circular-progress indeterminate style="--md-circular-progress-size:32px;"></md-circular-progress>
+        <span>正在加载台风数据…</span>
+    </div>
+</main>
+
+<div class="full-screen-settings" id="settingsOverlay">
+    <div class="settings-top-bar">
+        <md-icon-button onclick="closeSettings()">
+            <md-icon>close</md-icon>
+        </md-icon-button>
+        <span class="title">设置</span>
+        <span style="width:48px"></span>
+    </div>
+    <div class="settings-content">
+        <div class="md-input-group">
+            <label>地图瓦片</label>
+            <div class="chip-row" id="tileSelector">
+                <md-filter-chip data-tile="carto" label="浅色 (默认)" onclick="selectTile('carto')"></md-filter-chip>
+                <md-filter-chip data-tile="osm" label="OSM" onclick="selectTile('osm')"></md-filter-chip>
+                <md-filter-chip data-tile="amap" label="高德" onclick="selectTile('amap')"></md-filter-chip>
+            </div>
+            <div class="hint">切换后，重新打开详情即可生效。</div>
+        </div>
+        <div class="disclaimer">
+            <strong>免责声明</strong>
+            本页数据来自中央气象台（nmc.cn）公开接口，仅供参考。<br>
+            正式信息请以官方发布为准，本页不对因数据误差导致的任何后果负责。
+        </div>
+    </div>
+</div>
+
+<div class="detail-overlay" id="detailOverlay">
+    <div class="detail-sheet" id="detailSheet">
+        <div class="detail-handle"></div>
+        <div class="detail-header">
+            <span class="detail-title-text">台风详情</span>
+            <md-icon-button onclick="closeDetail()" aria-label="关闭">
+                <md-icon>close</md-icon>
+            </md-icon-button>
+        </div>
+        <div class="detail-content" id="detailContent"></div>
+    </div>
+</div>
+
+<script>
+// ================= 配置 =================
+const API_LIST = 'https://typhoon.nmc.cn/weatherservice/typhoon/jsons/list_default';
+const API_DETAIL = 'https://typhoon.nmc.cn/weatherservice/typhoon/jsons/view_';
+
+let allTyphoons = [];
+
+// ================= 初始化 =================
+document.addEventListener('DOMContentLoaded', () => {
+    loadAll();
+    initDetailDrag();
+});
+
+function loadAll() {
+    loadTyphoons();
+}
+
+// ================= JSONP 解析器 =================
+function parseJsonp(text) {
+    // 抓第一个 { 到最后一个 }，兼容双层括号
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start === -1 || end === -1) throw new Error('返回格式异常');
+    return JSON.parse(text.slice(start, end + 1));
+}
+
+// ================= 强度配色 =================
+function getStrengthStyle(strong) {
+    const s = String(strong || '');
+    if (s.includes('超强台风')) return { bg: '#B71C1C', fg: '#FFFFFF' };
+    if (s.includes('强台风'))   return { bg: '#FFCDD2', fg: '#B71C1C' };
+    if (s.includes('台风'))     return { bg: '#FFE0B2', fg: '#E65100' };
+    if (s.includes('强热带风暴')) return { bg: '#FFF9C4', fg: '#827717' };
+    if (s.includes('热带风暴')) return { bg: '#C8E6C9', fg: '#1B5E20' };
+    if (s.includes('热带低压')) return { bg: '#BBDEFB', fg: '#0D47A1' };
+    return { bg: '#E0E0E0', fg: '#1D1B20' };
+}
+
+// ================= 加载列表 =================
+async function loadTyphoons() {
+    const main = document.getElementById('mainContent');
+    main.innerHTML = `
+        <div class="loading-center">
+            <md-circular-progress indeterminate style="--md-circular-progress-size:32px;"></md-circular-progress>
+            <span>正在加载台风数据…</span>
+        </div>
+    `;
+
+    try {
+        const res = await fetch(API_LIST + '?t=' + Date.now());
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const text = await res.text();
+        const data = parseJsonp(text);
+
+        // nmc.cn 列表结构：data.typhoonList 是数组
+        const list = data.typhoonList || data.data?.typhoonList || [];
+        
+        // 筛选活跃（state === 'start'），无活跃时回退到最新一条
+        const active = list.filter(t => t[7] === 'start');
+        const showList = active.length > 0 ? active : (list.length > 0 ? [list[list.length - 1]] : []);
+
+        if (showList.length === 0) {
+            main.innerHTML = `
+                <div class="empty-state">
+                    <span class="material-symbols-outlined">cyclone</span>
+                    <h3>当前无活跃台风</h3>
+                    <p style="font-size:13px; margin-top:8px; opacity:0.7;">台风活跃期再回来看</p>
+                </div>
+            `;
+            return;
+        }
+
+        allTyphoons = showList;
+        renderTyphoons(showList);
+    } catch (e) {
+        console.error(e);
+        main.innerHTML = `
+            <div class="empty-state">
+                <span class="material-symbols-outlined">cloud_off</span>
+                <h3>加载失败</h3>
+                <p>${escapeHtml(e.message)}</p>
+                <div style="margin-top:16px;">
+                    <md-outlined-button onclick="loadTyphoons()">
+                        <md-icon slot="icon">refresh</md-icon>
+                        重试
+                    </md-outlined-button>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// ================= 列表渲染 =================
+function renderTyphoons(list) {
+    const main = document.getElementById('mainContent');
+    main.innerHTML = '';
+
+    const countBar = document.createElement('div');
+    countBar.className = 'count-bar';
+    countBar.textContent = `共 ${list.length} 个台风`;
+    main.appendChild(countBar);
+
+    list.forEach(t => {
+        main.appendChild(buildTyphoonCard(t));
+    });
+}
+
+// ================= 单张卡片 =================
+// nmc.cn 列表项结构（数组）：
+// [0]=id, [1]=英文名, [2]=中文名, [3]=? , [4]=编号, [5]=?, [6]=?, [7]=state, [8]=?
+function buildTyphoonCard(t) {
+    const card = document.createElement('div');
+    card.className = 'typhoon-card';
+
+    const id = t[0] || '';
+    const enname = t[1] || '';
+    const name = t[2] || '未命名';
+    const no = t[4] || '';
+    const state = t[7] || '';
+
+    // nmc.cn 列表接口返回的字段很少，详情需要另调 view_{id}
+    // 卡片先用基础信息，点开详情再加载完整数据
+    const isActive = state === 'start';
+
+    card.innerHTML = `
+        <div class="ty-card-header">
+            <div class="ty-card-name">
+                <span class="material-symbols-outlined">cyclone</span>
+                ${escapeHtml(name)}
+                ${enname ? `<span style="font-size:13px; font-weight:400; color:var(--md-sys-color-on-surface-variant); margin-left:4px;">${escapeHtml(enname)}</span>` : ''}
+            </div>
+            ${no ? `<div class="ty-card-no">${escapeHtml(String(no))}</div>` : ''}
+        </div>
+
+        <div class="ty-badge-row">
+            <span class="ty-badge" style="background:${isActive ? '#C8E6C9' : '#E0E0E0'}; color:${isActive ? '#1B5E20' : '#1D1B20'};">
+                <span class="material-symbols-outlined">circle</span>${isActive ? '活跃中' : '已停编'}
+            </span>
+        </div>
+
+        <div class="ty-info-row">
+            <span class="material-symbols-outlined info-icon">info</span>
+            <span class="info-text">点击查看路径详情</span>
+        </div>
+    `;
+
+    card.onclick = () => openDetail(t);
+    return card;
+}
+
+// ================= 详情 Bottom Sheet =================
+function openDetail(t) {
+    document.body.classList.add('no-scroll');
+
+    const overlay = document.getElementById('detailOverlay');
+    const sheet = document.getElementById('detailSheet');
+    const content = document.getElementById('detailContent');
+
+    overlay.classList.remove('closing');
+    sheet.classList.remove('closing');
+    sheet.style.animation = '';
+    sheet.style.transform = '';
+
+    const id = t[0] || '';
+    const name = t[2] || '未命名';
+    const enname = t[1] || '';
+    const no = t[4] || '';
+
+    // 先渲染基础头部
+    let html = `
+    <div class="ty-detail-hero">
+        <span class="material-symbols-outlined ty-hero-icon">cyclone</span>
+        <div class="ty-hero-name">${escapeHtml(name)}${enname ? ' · ' + escapeHtml(enname) : ''}</div>
+        ${no ? `<div class="ty-hero-no">编号 ${escapeHtml(String(no))}</div>` : ''}
+    </div>
+    <div class="ty-map-wrap" id="tyMap"></div>
+    <div id="detailBody">正在加载详情…</div>
+`;
+
+    content.innerHTML = html;
+    overlay.classList.add('show');
+
+    overlay.onclick = (e) => {
+        if (e.target === overlay) closeDetail();
+    };
+
+    if (id) {
+        loadDetail(id);
+    } else {
+        document.getElementById('detailBody').innerHTML = '<p style="font-size:13px; color:var(--md-sys-color-on-surface-variant);">无 ID，无法加载详情</p>';
+    }
+}
+
+async function loadDetail(id) {
+    const body = document.getElementById('detailBody');
+    if (!body) return;
+
+    try {
+        const url = API_DETAIL + id + '?t=' + Date.now();
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const text = await res.text();
+        const data = parseJsonp(text);
+
+        // nmc.cn 详情结构：data.typhoon
+        const ty = data.typhoon || data;
+        
+        // 提取路径点
+        // ty[8] 是路径数组，每个点是一个数组
+        // 点结构：[0]=?, [1]=时间UTC, [2]=?, [3]=强度代码, [4]=经度, [5]=纬度, [6]=气压, [7]=风速
+        const points = ty[8] || [];
+
+        let html = '';
+
+        // 取最新一个点作为当前信息
+        if (points.length > 0) {
+            const latest = points[points.length - 1];
+            const lat = latest[5] || '';
+            const lng = latest[4] || '';
+            const pressure = latest[6] || '';
+            const speed = latest[7] || '';
+            const grade = latest[3] || '';
+
+            if (grade) html += fieldRow('强度等级', translateGrade(grade));
+            if (pressure) html += fieldRow('中心气压', `${pressure} hPa`);
+            if (speed) html += fieldRow('最大风速', `${speed} m/s`);
+            if (lat && lng) html += fieldRow('当前位置', `${lat}°N ${lng}°E`);
+        }
+
+        // 路径表格
+        html += `<div class="path-section-title"><span class="material-symbols-outlined">route</span>路径点</div>`;
+        html += buildPathTable(points);
+
+        initTyphoonMap(points);
+
+        body.innerHTML = html;
+    } catch (e) {
+        console.error(e);
+        body.innerHTML = `<p style="font-size:13px; color:var(--md-sys-color-error);">详情加载失败：${escapeHtml(e.message)}</p>`;
+    }
+}
+
+function buildPathTable(points) {
+    if (!Array.isArray(points) || points.length === 0) {
+        return '<p style="font-size:13px; color:var(--md-sys-color-on-surface-variant);">暂无路径数据</p>';
+    }
+
+    let rows = '';
+    points.forEach(p => {
+        const time = formatTyphoonTime(p[1] || '');
+        const lat = p[5] || '';
+        const lng = p[4] || '';
+        const pressure = p[6] || '';
+        const speed = p[7] || '';
+        rows += `
+            <tr>
+                <td>${escapeHtml(String(time))}</td>
+                <td>${escapeHtml(String(lat))}°N</td>
+                <td>${escapeHtml(String(lng))}°E</td>
+                <td>${escapeHtml(String(pressure))}</td>
+                <td>${escapeHtml(String(speed))}</td>
+            </tr>
+        `;
+    });
+
+    return `
+        <table class="path-table">
+            <thead>
+                <tr>
+                    <th>时间</th>
+                    <th>纬度</th>
+                    <th>经度</th>
+                    <th>气压</th>
+                    <th>风速</th>
+                </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+        </table>
+    `;
+}
+
+function closeDetail() {
+    const overlay = document.getElementById('detailOverlay');
+    const sheet = document.getElementById('detailSheet');
+
+    sheet.classList.add('closing');
+
+    setTimeout(() => {
+        overlay.classList.remove('show');
+        sheet.classList.remove('closing');
+        sheet.style.transform = '';
+        sheet.style.animation = '';
+        document.body.classList.remove('no-scroll');
+    }, 300);
+}
+
+function fieldRow(label, value) {
+    return `
+        <div class="detail-field">
+            <div class="field-label">${escapeHtml(label)}</div>
+            <div class="field-value">${escapeHtml(value)}</div>
+        </div>
+    `;
+}
+
+// ================= 详情面板拖拽 =================
+function initDetailDrag() {
+    const sheet = document.getElementById('detailSheet');
+    const handle = sheet.querySelector('.detail-handle');
+    if (!handle) return;
+
+    let startY = 0;
+    let currentY = 0;
+    let dragging = false;
+
+    const onStart = (clientY) => {
+        if (sheet.classList.contains('closing')) return;
+        dragging = true;
+        startY = clientY;
+        currentY = 0;
+        sheet.classList.add('dragging');
+        sheet.style.animation = 'none';
+    };
+
+    const onMove = (clientY) => {
+        if (!dragging) return;
+        currentY = Math.max(0, clientY - startY);
+        sheet.style.transform = `translateY(${currentY}px)`;
+    };
+
+    const onEnd = () => {
+        if (!dragging) return;
+        dragging = false;
+        sheet.classList.remove('dragging');
+        sheet.style.animation = '';
+
+        if (currentY > 100) {
+            sheet.style.transform = '';
+            closeDetail();
+        } else {
+            sheet.style.transform = 'translateY(0)';
+            setTimeout(() => {
+                if (!sheet.classList.contains('closing')) {
+                    sheet.style.transform = '';
+                }
+            }, 260);
+        }
+        currentY = 0;
+    };
+
+    handle.addEventListener('touchstart', (e) => onStart(e.touches[0].clientY), { passive: true });
+    handle.addEventListener('touchmove', (e) => onMove(e.touches[0].clientY), { passive: true });
+    handle.addEventListener('touchend', onEnd);
+
+    handle.addEventListener('mousedown', (e) => {
+        onStart(e.clientY);
+        const move = (ev) => onMove(ev.clientY);
+        const up = () => {
+            onEnd();
+            document.removeEventListener('mousemove', move);
+            document.removeEventListener('mouseup', up);
+        };
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', up);
+    });
+}
+
+// ================= 工具 =================
+function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+}
+
+// 强度缩写 → 中文
+function translateGrade(grade) {
+    if (!grade) return '';
+    const map = {
+        'TD': '热带低压',
+        'TS': '热带风暴',
+        'STS': '强热带风暴',
+        'TY': '台风',
+        'STY': '强台风',
+        'SuperTY': '超强台风',
+        'Super TY': '超强台风'
+    };
+    return map[grade] || grade;
+}
+
+// 台风时间格式：202609120000 → 09-12 00:00
+// 台风时间格式：202609120000 → 2026年09月12日 03:00
+function formatTyphoonTime(s) {
+    const str = String(s || '');
+    const m = str.match(/^(\d{4})(\d{2})(\d{2})(\d{2})(\d{2})(\d{2})?/);
+    if (m) {
+        const base = `${m[1]}年${m[2]}月${m[3]}日 ${m[4]}:${m[5]}`;
+        return m[6] ? `${base}:${m[6]}` : base;
+    }
+    return str;
+}
+
+// ================= 地图 =================
+let tyMap = null;
+let tyMapLayerGroup = null;
+
+const TILE_PROVIDERS = {
+    carto: {
+        url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+        attr: '&copy; OpenStreetMap &copy; CARTO',
+        needGcj: false
+    },
+    osm: {
+        url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+        attr: '&copy; OpenStreetMap contributors',
+        needGcj: false
+    },
+    amap: {
+        url: 'https://webrd0{s}.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=8&x={x}&y={y}&z={z}',
+        attr: '&copy; 高德地图',
+        needGcj: true,
+        subdomains: ['1','2','3','4']
+    }
+};
+
+function getTileProvider() {
+    const saved = localStorage.getItem('md3_typhoon_tile') || 'carto';
+    return TILE_PROVIDERS[saved] || TILE_PROVIDERS.carto;
+}
+
+// WGS84 → GCJ02 坐标转换
+function wgs84ToGcj02(lng, lat) {
+    const a = 6378245.0;
+    const ee = 0.00669342162296594323;
+    const PI = Math.PI;
+
+    function outOfChina(lng, lat) {
+        return lng < 72.004 || lng > 137.8347 || lat < 0.8293 || lat > 55.8271;
+    }
+    function transformLat(x, y) {
+        let ret = -100.0 + 2.0*x + 3.0*y + 0.2*y*y + 0.1*x*y + 0.2*Math.sqrt(Math.abs(x));
+        ret += (20.0*Math.sin(6.0*x*PI) + 20.0*Math.sin(2.0*x*PI)) * 2.0/3.0;
+        ret += (20.0*Math.sin(y*PI) + 40.0*Math.sin(y/3.0*PI)) * 2.0/3.0;
+        ret += (160.0*Math.sin(y/12.0*PI) + 320*Math.sin(y*PI/30.0)) * 2.0/3.0;
+        return ret;
+    }
+    function transformLng(x, y) {
+        let ret = 300.0 + x + 2.0*y + 0.1*x*x + 0.1*x*y + 0.1*Math.sqrt(Math.abs(x));
+        ret += (20.0*Math.sin(6.0*x*PI) + 20.0*Math.sin(2.0*x*PI)) * 2.0/3.0;
+        ret += (20.0*Math.sin(x*PI) + 40.0*Math.sin(x/3.0*PI)) * 2.0/3.0;
+        ret += (150.0*Math.sin(x/12.0*PI) + 300.0*Math.sin(x/30.0*PI)) * 2.0/3.0;
+        return ret;
+    }
+
+    if (outOfChina(lng, lat)) return [lng, lat];
+
+    let dLat = transformLat(lng - 105.0, lat - 35.0);
+    let dLng = transformLng(lng - 105.0, lat - 35.0);
+    const radLat = lat / 180.0 * PI;
+    let magic = Math.sin(radLat);
+    magic = 1 - ee * magic * magic;
+    const sqrtMagic = Math.sqrt(magic);
+    dLat = (dLat * 180.0) / ((a * (1 - ee)) / (magic * sqrtMagic) * PI);
+    dLng = (dLng * 180.0) / (a / sqrtMagic * Math.cos(radLat) * PI);
+    return [lng + dLng, lat + dLat];
+}
+
+// 强度 → 颜色
+function getGradeColor(grade) {
+    const s = String(grade || '');
+    if (s.includes('超强台风') || s === 'SuperTY') return '#B71C1C';
+    if (s.includes('强台风') || s === 'STY') return '#E53935';
+    if (s.includes('台风') || s === 'TY') return '#FB8C00';
+    if (s.includes('强热带风暴') || s === 'STS') return '#FDD835';
+    if (s.includes('热带风暴') || s === 'TS') return '#43A047';
+    if (s.includes('热带低压') || s === 'TD') return '#1E88E5';
+    return '#757575';
+}
+
+// 初始化地图
+function initTyphoonMap(points) {
+    const container = document.getElementById('tyMap');
+    if (!container) return;
+
+    // 销毁旧地图
+    if (tyMap) {
+        tyMap.remove();
+        tyMap = null;
+        tyMapLayerGroup = null;
+    }
+
+    if (!Array.isArray(points) || points.length === 0) {
+        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--md-sys-color-on-surface-variant);font-size:13px;">暂无路径数据</div>';
+        return;
+    }
+
+    // 提取经纬度
+    const coords = points.map(p => {
+        const lat = parseFloat(p[5]);
+        const lng = parseFloat(p[4]);
+        return { lat, lng, raw: p };
+    }).filter(c => !isNaN(c.lat) && !isNaN(c.lng));
+
+    if (coords.length === 0) {
+        container.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--md-sys-color-on-surface-variant);font-size:13px;">坐标无效</div>';
+        return;
+    }
+
+    // 初始化地图
+    tyMap = L.map(container, {
+        zoomControl: false,
+        attributionControl: false
+    });
+
+    // 加瓦片
+    const provider = getTileProvider();
+    const tileOptions = {
+        attribution: provider.attr,
+        maxZoom: 18
+    };
+    if (provider.subdomains) tileOptions.subdomains = provider.subdomains;
+    L.tileLayer(provider.url, tileOptions).addTo(tyMap);
+
+    tyMapLayerGroup = L.layerGroup().addTo(tyMap);
+
+    // 坐标转换
+    const finalCoords = coords.map(c => {
+        if (provider.needGcj) {
+            const [lng, lat] = wgs84ToGcj02(c.lng, c.lat);
+            return { lat, lng, raw: c.raw };
+        }
+        return c;
+    });
+
+    // 画路径线
+    const latlngs = finalCoords.map(c => [c.lat, c.lng]);
+    L.polyline(latlngs, {
+        color: '#6750A4',
+        weight: 3,
+        opacity: 0.8
+    }).addTo(tyMapLayerGroup);
+
+    // 画路径点
+    finalCoords.forEach((c, i) => {
+        const p = c.raw;
+        const grade = p[3] || '';
+        const color = getGradeColor(grade);
+        const isCurrent = i === finalCoords.length - 1;
+
+        const marker = L.circleMarker([c.lat, c.lng], {
+            radius: isCurrent ? 8 : 5,
+            fillColor: color,
+            color: '#fff',
+            weight: 2,
+            fillOpacity: 1
+        }).addTo(tyMapLayerGroup);
+
+        const time = formatTyphoonTime(p[1] || '');
+        const pressure = p[6] || '';
+        const speed = p[7] || '';
+        const gradeText = translateGrade(grade);
+
+        marker.bindPopup(`
+            <div style="font-size:12px; line-height:1.6;">
+                <div><strong>${escapeHtml(time)}</strong></div>
+                ${gradeText ? `<div>${escapeHtml(gradeText)}</div>` : ''}
+                ${pressure ? `<div>气压：${escapeHtml(String(pressure))} hPa</div>` : ''}
+                ${speed ? `<div>风速：${escapeHtml(String(speed))} m/s</div>` : ''}
+            </div>
+        `);
+    });
+
+    // 自适应视图
+    tyMap.fitBounds(L.latLngBounds(latlngs), { padding: [30, 30] });
+}
+
+function openSettings() {
+    document.body.classList.add('no-scroll');
+    initSettingsUI();
+    document.getElementById('settingsOverlay').classList.add('show');
+}
+
+function closeSettings() {
+    const overlay = document.getElementById('settingsOverlay');
+    overlay.classList.add('closing');
+    setTimeout(() => {
+        overlay.classList.remove('show');
+        overlay.classList.remove('closing');
+        document.body.classList.remove('no-scroll');
+    }, 300);
+}
+
+function initSettingsUI() {
+    const tile = localStorage.getItem('md3_typhoon_tile') || 'carto';
+    document.querySelectorAll('#tileSelector md-filter-chip').forEach(el => {
+        el.selected = (el.dataset.tile === tile);
+    });
+}
+
+function selectTile(tile) {
+    localStorage.setItem('md3_typhoon_tile', tile);
+    initSettingsUI();
+}
+</script>
+
+</body>
+</html>

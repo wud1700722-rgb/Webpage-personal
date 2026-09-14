@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>必应每日壁纸</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+<script type="importmap">
+    { "imports": { "@material/web/": "https://esm.sh/@material/web@2.0.0/" } }
+</script>
+<script type="module">
+    import '@material/web/all.js';
+</script>
+<style>
+:root {
+    --md-sys-color-primary: #6750A4;
+    --md-sys-color-on-primary: #FFFFFF;
+    --md-sys-color-primary-container: #EADDFF;
+    --md-sys-color-on-primary-container: #21005D;
+    --md-sys-color-secondary-container: #E8DEF8;
+    --md-sys-color-on-secondary-container: #1D192B;
+    --md-sys-color-surface: #FEF7FF;
+    --md-sys-color-on-surface: #1D1B20;
+    --md-sys-color-surface-container: #F3EDF7;
+    --md-sys-color-surface-container-high: #ECE6F0;
+    --md-sys-color-on-surface-variant: #49454F;
+    --md-sys-color-outline: #79747E;
+    --md-sys-color-outline-variant: #CAC4D0;
+    --md-sys-color-error: #B3261E;
+    --md-sys-shape-corner-small: 8px;
+    --md-sys-shape-corner-medium: 12px;
+    --md-sys-shape-corner-large: 16px;
+    --md-sys-shape-corner-extra-large: 28px;
+    --app-font-family: 'Google Sans', 'Roboto', 'Noto Sans SC', system-ui, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--app-font-family); -webkit-tap-highlight-color: transparent; }
+body { background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 32px; }
+body.no-scroll { overflow: hidden; }
+
+/* 顶部栏 */
+.top-app-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px;
+    position: sticky; top: 0;
+    background: var(--md-sys-color-surface);
+    z-index: 30;
+    min-height: 64px;
+}
+.top-left { display: flex; align-items: center; gap: 4px; }
+.app-title { font-size: 22px; font-weight: 500; display: flex; align-items: center; gap: 8px; line-height: 28px; }
+.app-title .material-symbols-outlined { color: var(--md-sys-color-primary); font-size: 24px; font-variation-settings: 'FILL' 1; }
+.top-actions { display: flex; align-items: center; gap: 4px; }
+
+/* 主内容 */
+.main-content { flex: 1; padding: 0 16px; max-width: 800px; margin: 0 auto; width: 100%; }
+
+/* 大图卡片 */
+.hero-card {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border-radius: 24px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    background: var(--md-sys-color-surface-container);
+    cursor: pointer;
+    animation: fadeIn 0.4s ease;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+.hero-card img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s;
+}
+.hero-card:hover img { transform: scale(1.03); }
+
+.hero-info {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 20px 20px 16px;
+    background: linear-gradient(to top, rgba(0,0,0,0.75), rgba(0,0,0,0));
+    color: white;
+    pointer-events: none;
+}
+.hero-title {
+    font-size: 18px;
+    font-weight: 700;
+    line-height: 24px;
+    margin-bottom: 4px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+.hero-copyright {
+    font-size: 12px;
+    opacity: 0.85;
+    line-height: 16px;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+/* 分辨率切换 */
+.res-chips {
+    display: flex;
+    gap: 8px;
+    padding: 0 0 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.res-chips::-webkit-scrollbar { display: none; }
+
+/* 缩略图网格 */
+.grid-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.grid-title .material-symbols-outlined {
+    font-size: 18px;
+    color: var(--md-sys-color-primary);
+}
+.thumb-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+}
+@media (min-width: 560px) {
+    .thumb-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (min-width: 800px) {
+    .thumb-grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+.thumb-card {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--md-sys-color-surface-container);
+    cursor: pointer;
+    animation: fadeIn 0.3s ease;
+}
+.thumb-card img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s;
+}
+.thumb-card:hover img { transform: scale(1.05); }
+.thumb-label {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    padding: 6px 10px;
+    background: linear-gradient(to top, rgba(0,0,0,0.7), rgba(0,0,0,0));
+    color: white;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 14px;
+    pointer-events: none;
+}
+
+/* 加载 / 空状态 */
+.loading-center { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; gap: 16px; color: var(--md-sys-color-on-surface-variant); font-size: 14px; }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--md-sys-color-on-surface-variant); }
+.empty-state .material-symbols-outlined { font-size: 64px; color: var(--md-sys-color-outline-variant); margin-bottom: 16px; }
+.empty-state h3 { font-size: 16px; margin-bottom: 8px; color: var(--md-sys-color-on-surface); font-weight: 500; }
+
+/* 大图预览 Bottom Sheet */
+.preview-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 300;
+    display: none; align-items: flex-end; justify-content: center;
+}
+.preview-overlay.show { display: flex; }
+
+.preview-sheet {
+    background: var(--md-sys-color-surface);
+    width: 100%; max-width: 700px; max-height: 92vh;
+    border-top-left-radius: 28px; border-top-right-radius: 28px;
+    display: flex; flex-direction: column;
+    transform: translateY(100%);
+    animation: sheetUp 0.35s cubic-bezier(0.2, 0, 0, 1) forwards;
+    overflow: hidden;
+    transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+.preview-sheet.dragging { transition: none; }
+.preview-sheet.closing { animation: sheetDown 0.3s cubic-bezier(0.4, 0, 1, 1) forwards; }
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes sheetDown { from { transform: translateY(0); } to { transform: translateY(100%); } }
+
+.preview-handle {
+    width: 100%; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; cursor: grab; touch-action: none;
+}
+.preview-handle::before {
+    content: '';
+    width: 40px; height: 4px;
+    background: var(--md-sys-color-outline-variant);
+    border-radius: 2px;
+}
+.preview-handle:active { cursor: grabbing; }
+
+.preview-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 16px 8px; flex-shrink: 0;
+}
+.preview-title-text { font-size: 16px; font-weight: 500; line-height: 24px; }
+.preview-content {
+    flex: 1; overflow-y: auto;
+    padding: 0 20px 32px;
+}
+.preview-img-wrap {
+    width: 100%;
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 16px;
+    background: var(--md-sys-color-surface-container);
+}
+.preview-img-wrap img {
+    width: 100%; height: auto; display: block;
+}
+.preview-field {
+    display: flex; gap: 10px;
+    padding: 12px 0;
+    font-size: 14px; line-height: 20px; align-items: flex-start;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+.preview-field:last-child { border-bottom: none; }
+.preview-field .field-label { color: var(--md-sys-color-on-surface-variant); flex-shrink: 0; min-width: 80px; }
+.preview-field .field-value { color: var(--md-sys-color-on-surface); flex: 1; word-break: break-word; }
+
+.preview-actions {
+    padding: 12px 20px calc(12px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--md-sys-color-outline-variant);
+    flex-shrink: 0;
+    background: var(--md-sys-color-surface);
+    display: flex;
+    gap: 8px;
+}
+.preview-actions md-filled-button,
+.preview-actions md-outlined-button {
+    flex: 1;
+}
+
+/* Toast */
+.toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1D1B20;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-size: 14px;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.toast.show { opacity: 1; }
+
+md-icon { font-family: 'Material Symbols Outlined'; font-size: 24px; display: inline-flex; align-items: center; justify-content: center; }
+</style>
+</head>
+<body>
+
+<header class="top-app-bar">
+    <div class="top-left">
+        <div class="app-title">
+            <span class="material-symbols-outlined">wallpaper</span>
+            必应每日壁纸
+        </div>
+    </div>
+    <div class="top-actions">
+        <md-icon-button onclick="loadRandom()" aria-label="随机">
+            <md-icon>shuffle</md-icon>
+        </md-icon-button>
+        <md-icon-button onclick="loadAll()" aria-label="刷新">
+            <md-icon>refresh</md-icon>
+        </md-icon-button>
+    </div>
+</header>
+
+<main class="main-content" id="mainContent">
+    <div class="loading-center">
+        <md-circular-progress indeterminate style="--md-circular-progress-size:32px;"></md-circular-progress>
+        <span>正在加载壁纸…</span>
+    </div>
+</main>
+
+<!-- 预览 Bottom Sheet -->
+<div class="preview-overlay" id="previewOverlay">
+    <div class="preview-sheet" id="previewSheet">
+        <div class="preview-handle"></div>
+        <div class="preview-header">
+            <span class="preview-title-text">壁纸预览</span>
+            <md-icon-button onclick="closePreview()" aria-label="关闭">
+                <md-icon>close</md-icon>
+            </md-icon-button>
+        </div>
+        <div class="preview-content" id="previewContent"></div>
+        <div class="preview-actions">
+            <md-outlined-button onclick="copyImageLink()">
+                <md-icon slot="icon">link</md-icon>
+                复制链接
+            </md-outlined-button>
+            <md-filled-button onclick="downloadImage()">
+                <md-icon slot="icon">download</md-icon>
+                下载
+            </md-filled-button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ================= 配置 =================
+const API_IMG = 'https://bing.lbeam08.cn/img/';   // 图片用这个
+const API_META = 'https://www.bing.com/HPImageArchive.aspx';  // 元数据用微软官方
+
+const RESOLUTIONS = {
+    uhd: 'UHD 4K',
+    fhd: '1080P',
+    hd: '标清',
+    m: '手机版',
+    auto: '自动适配'
+};
+
+let currentRes = 'auto';
+let previewData = null;
+
+// ================= 初始化 =================
+document.addEventListener('DOMContentLoaded', () => {
+    loadAll();
+    initPreviewDrag();
+});
+
+function loadAll() {
+    loadHero();
+    loadGrid();
+}
+
+// ================= 获取元数据（微软官方接口） =================
+// idx 0-7 有效，8-15 返回空元数据
+const url = API_META + '?format=js&idx=' + idx + '&n=1&mkt=zh-CN';
+
+// ================= 图片 URL =================
+function getImageUrl(idx, res) {
+    const r = res || currentRes;
+    let url = API_IMG + r;
+    const params = [];
+    if (idx !== undefined && idx !== null) params.push('idx=' + idx);
+    params.push('direct=true');
+    params.push('t=' + Date.now());
+    return url + '?' + params.join('&');
+}
+
+// ================= 大图 =================
+async function loadHero() {
+    const main = document.getElementById('mainContent');
+    main.innerHTML = `
+        <div class="loading-center">
+            <md-circular-progress indeterminate style="--md-circular-progress-size:32px;"></md-circular-progress>
+            <span>正在加载壁纸…</span>
+        </div>
+    `;
+
+    // 元数据失败不影响图片
+    let meta = { title: '', copyright: '', date: '', desc: '' };
+    try {
+        meta = await fetchMeta(0);
+    } catch (e) {
+        console.warn('元数据加载失败，仅显示图片:', e);
+    }
+
+    const imgUrl = getImageUrl(0);
+
+    let html = `
+        <div class="hero-card" onclick="openPreview(0)">
+            <img src="${imgUrl}" alt="${escapeHtml(meta.title || '')}">
+            <div class="hero-info">
+                <div class="hero-title">${escapeHtml(meta.title || '今日壁纸')}</div>
+                ${meta.copyright ? `<div class="hero-copyright">${escapeHtml(meta.copyright)}</div>` : ''}
+            </div>
+        </div>
+
+        <div class="res-chips" id="resChips">
+            ${Object.keys(RESOLUTIONS).map(key => `
+                <md-filter-chip
+                    data-res="${key}"
+                    label="${RESOLUTIONS[key]}"
+                    ${key === currentRes ? 'selected' : ''}
+                    onclick="selectRes('${key}')">
+                </md-filter-chip>
+            `).join('')}
+        </div>
+
+        <div class="grid-title">
+            <span class="material-symbols-outlined">history</span>
+            最近 15 天
+        </div>
+        <div class="thumb-grid" id="thumbGrid"></div>
+    `;
+    main.innerHTML = html;
+
+    loadGrid();
+}
+
+// ================= 缩略图网格 =================
+function loadGrid() {
+    const grid = document.getElementById('thumbGrid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+
+    for (let i = 1; i <= 15; i++) {
+        const card = document.createElement('div');
+        card.className = 'thumb-card';
+        card.onclick = () => openPreview(i);
+
+        const imgUrl = getImageUrl(i);
+        card.innerHTML = `
+            <img src="${imgUrl}" alt="${i} 天前" loading="lazy">
+            <div class="thumb-label">${i} 天前</div>
+        `;
+        grid.appendChild(card);
+    }
+}
+
+// ================= 分辨率切换 =================
+function selectRes(res) {
+    currentRes = res;
+    document.querySelectorAll('#resChips md-filter-chip').forEach(el => {
+        el.selected = (el.dataset.res === res);
+    });
+    loadHero();
+}
+
+// ================= 预览 =================
+async function openPreview(idx) {
+    document.body.classList.add('no-scroll');
+
+    const overlay = document.getElementById('previewOverlay');
+    const sheet = document.getElementById('previewSheet');
+    const content = document.getElementById('previewContent');
+
+    overlay.classList.remove('closing');
+    sheet.classList.remove('closing');
+    sheet.style.animation = '';
+    sheet.style.transform = '';
+
+    content.innerHTML = `
+        <div class="loading-center" style="padding: 40px 20px;">
+            <md-circular-progress indeterminate style="--md-circular-progress-size:24px;"></md-circular-progress>
+            <span>加载中…</span>
+        </div>
+    `;
+
+    overlay.classList.add('show');
+
+    overlay.onclick = (e) => {
+        if (e.target === overlay) closePreview();
+    };
+
+    const imgUrl = getImageUrl(idx);
+
+    // 先显示图片
+    let html = `
+        <div class="preview-img-wrap">
+            <img src="${imgUrl}" alt="">
+        </div>
+    `;
+    content.innerHTML = html;
+
+    // 再异步补元数据（失败不显示错误）
+    try {
+        const meta = await fetchMeta(idx);
+        previewData = { ...meta, idx };
+
+        let infoHtml = '';
+        if (meta.title) infoHtml += fieldRow('标题', meta.title);
+        if (meta.copyright) infoHtml += fieldRow('版权', meta.copyright);
+        if (meta.date) infoHtml += fieldRow('日期', formatDate(meta.date));
+        if (meta.desc) infoHtml += fieldRow('描述', meta.desc);
+        content.innerHTML = html + infoHtml;
+    } catch (e) {
+        console.warn('元数据加载失败:', e);
+        previewData = { idx };
+        content.innerHTML = html + `<p style="text-align:center; font-size:13px; color:var(--md-sys-color-on-surface-variant); padding:8px;">暂无元数据</p>`;
+    }
+}
+
+function closePreview() {
+    const overlay = document.getElementById('previewOverlay');
+    const sheet = document.getElementById('previewSheet');
+
+    sheet.classList.add('closing');
+
+    setTimeout(() => {
+        overlay.classList.remove('show');
+        sheet.classList.remove('closing');
+        sheet.style.transform = '';
+        sheet.style.animation = '';
+        document.body.classList.remove('no-scroll');
+        previewData = null;
+    }, 300);
+}
+
+function fieldRow(label, value) {
+    return `
+        <div class="preview-field">
+            <div class="field-label">${escapeHtml(label)}</div>
+            <div class="field-value">${escapeHtml(value)}</div>
+        </div>
+    `;
+}
+
+// ================= 下载 / 复制 =================
+function getCurrentImageUrl() {
+    if (!previewData) return '';
+    return getImageUrl(previewData.idx);
+}
+
+function downloadImage() {
+    if (!previewData) { showToast('没有可下载的图片'); return; }
+    const url = getCurrentImageUrl();
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bing_${previewData.date || previewData.idx || 'wallpaper'}.jpg`;
+    a.target = '_blank';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    showToast('已开始下载');
+}
+
+function copyImageLink() {
+    if (!previewData) { showToast('没有可复制的链接'); return; }
+    const url = getCurrentImageUrl();
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(() => showToast('已复制链接')).catch(() => fallbackCopy(url));
+    } else {
+        fallbackCopy(url);
+    }
+}
+
+function fallbackCopy(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showToast('已复制链接'); } catch (e) {}
+    document.body.removeChild(ta);
+}
+
+// ================= 随机 =================
+function loadRandom() {
+    const main = document.getElementById('mainContent');
+    const finalUrl = API_IMG + 'rand?direct=true&t=' + Date.now() + '&r=' + Math.random();
+
+    main.innerHTML = `
+        <div class="hero-card" onclick="showToast('随机壁纸，刷新可换一张')">
+            <img src="${finalUrl}" alt="随机壁纸">
+            <div class="hero-info">
+                <div class="hero-title">随机壁纸</div>
+                <div class="hero-copyright">点刷新换一张</div>
+            </div>
+        </div>
+        <div class="res-chips" id="resChips">
+            ${Object.keys(RESOLUTIONS).map(key => `
+                <md-filter-chip
+                    data-res="${key}"
+                    label="${RESOLUTIONS[key]}"
+                    ${key === currentRes ? 'selected' : ''}
+                    onclick="selectRes('${key}')">
+                </md-filter-chip>
+            `).join('')}
+        </div>
+        <div style="text-align:center; padding:20px;">
+            <md-outlined-button onclick="loadAll()">
+                <md-icon slot="icon">arrow_back</md-icon>
+                返回每日壁纸
+            </md-outlined-button>
+        </div>
+    `;
+}
+
+// ================= 工具 =================
+function formatDate(s) {
+    const str = String(s || '');
+    if (str.length === 8) {
+        return `${str.slice(0,4)}年${str.slice(4,6)}月${str.slice(6,8)}日`;
+    }
+    return str;
+}
+
+function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+}
+
+// ================= Toast =================
+function showToast(msg) {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        toast.className = 'toast';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => toast.classList.remove('show'), 1800);
+}
+
+// ================= 预览面板拖拽 =================
+function initPreviewDrag() {
+    const sheet = document.getElementById('previewSheet');
+    const handle = sheet.querySelector('.preview-handle');
+    if (!handle) return;
+
+    let startY = 0;
+    let currentY = 0;
+    let dragging = false;
+
+    const onStart = (clientY) => {
+        if (sheet.classList.contains('closing')) return;
+        dragging = true;
+        startY = clientY;
+        currentY = 0;
+        sheet.classList.add('dragging');
+        sheet.style.animation = 'none';
+    };
+
+    const onMove = (clientY) => {
+        if (!dragging) return;
+        currentY = Math.max(0, clientY - startY);
+        sheet.style.transform = `translateY(${currentY}px)`;
+    };
+
+    const onEnd = () => {
+        if (!dragging) return;
+        dragging = false;
+        sheet.classList.remove('dragging');
+        sheet.style.animation = '';
+
+        if (currentY > 100) {
+            sheet.style.transform = '';
+            closePreview();
+        } else {
+            sheet.style.transform = 'translateY(0)';
+            setTimeout(() => {
+                if (!sheet.classList.contains('closing')) {
+                    sheet.style.transform = '';
+                }
+            }, 260);
+        }
+        currentY = 0;
+    };
+
+    handle.addEventListener('touchstart', (e) => onStart(e.touches[0].clientY), { passive: true });
+    handle.addEventListener('touchmove', (e) => onMove(e.touches[0].clientY), { passive: true });
+    handle.addEventListener('touchend', onEnd);
+
+    handle.addEventListener('mousedown', (e) => {
+        onStart(e.clientY);
+        const move = (ev) => onMove(ev.clientY);
+        const up = () => {
+            onEnd();
+            document.removeEventListener('mousemove', move);
+            document.removeEventListener('mouseup', up);
+        };
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', up);
+    });
+}
+</script>
+
+</body>
+</html>

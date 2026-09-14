@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>防灾清单</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+<script type="importmap">
+    { "imports": { "@material/web/": "https://esm.sh/@material/web@2.0.0/" } }
+</script>
+<script type="module">
+    import '@material/web/all.js';
+</script>
+<style>
+:root {
+    --md-sys-color-primary: #6750A4;
+    --md-sys-color-on-primary: #FFFFFF;
+    --md-sys-color-primary-container: #EADDFF;
+    --md-sys-color-on-primary-container: #21005D;
+    --md-sys-color-secondary-container: #E8DEF8;
+    --md-sys-color-on-secondary-container: #1D192B;
+    --md-sys-color-surface: #FEF7FF;
+    --md-sys-color-on-surface: #1D1B20;
+    --md-sys-color-surface-container: #F3EDF7;
+    --md-sys-color-surface-container-high: #ECE6F0;
+    --md-sys-color-on-surface-variant: #49454F;
+    --md-sys-color-outline: #79747E;
+    --md-sys-color-outline-variant: #CAC4D0;
+    --md-sys-color-error: #B3261E;
+    --app-font-family: 'Google Sans', 'Roboto', 'Noto Sans SC', system-ui, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--app-font-family); -webkit-tap-highlight-color: transparent; }
+body { background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 32px; }
+
+.top-app-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px;
+    position: sticky; top: 0;
+    background: var(--md-sys-color-surface);
+    z-index: 30;
+    min-height: 64px;
+}
+.app-title { font-size: 22px; font-weight: 500; display: flex; align-items: center; gap: 8px; line-height: 28px; }
+.app-title .material-symbols-outlined { color: var(--md-sys-color-primary); font-size: 24px; font-variation-settings: 'FILL' 1; }
+.top-actions { display: flex; align-items: center; gap: 4px; }
+
+.main-content { flex: 1; padding: 0 16px; max-width: 800px; margin: 0 auto; width: 100%; }
+
+/* 总进度卡片 */
+.progress-card {
+    background: linear-gradient(135deg, #6750A4, #8B6FD4);
+    color: white;
+    border-radius: 24px;
+    padding: 20px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+}
+.progress-card::after {
+    content: '';
+    position: absolute;
+    right: -40px;
+    top: -40px;
+    width: 160px;
+    height: 160px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+    pointer-events: none;
+}
+.progress-label {
+    font-size: 13px;
+    opacity: 0.85;
+    margin-bottom: 8px;
+}
+.progress-num {
+    font-size: 36px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 12px;
+}
+.progress-num small {
+    font-size: 16px;
+    font-weight: 400;
+    opacity: 0.75;
+}
+.progress-bar-bg {
+    width: 100%;
+    height: 8px;
+    background: rgba(255,255,255,0.25);
+    border-radius: 4px;
+    overflow: hidden;
+}
+.progress-bar-fill {
+    height: 100%;
+    background: white;
+    border-radius: 4px;
+    transition: width 0.4s cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* 分类 chips */
+.cat-chips {
+    display: flex;
+    gap: 8px;
+    padding: 0 0 16px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.cat-chips::-webkit-scrollbar { display: none; }
+
+/* 清单 */
+.check-list {
+    background: var(--md-sys-color-surface-container);
+    border-radius: 16px;
+    padding: 4px 16px;
+    margin-bottom: 16px;
+}
+.check-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    cursor: pointer;
+    min-height: 48px;
+    transition: opacity 0.2s;
+}
+.check-item:last-child { border-bottom: none; }
+.check-item.checked { opacity: 0.55; }
+.check-item.checked .check-text {
+    text-decoration: line-through;
+    color: var(--md-sys-color-on-surface-variant);
+}
+.check-text {
+    flex: 1;
+    font-size: 15px;
+    line-height: 22px;
+    color: var(--md-sys-color-on-surface);
+    padding: 8px 0;
+    word-break: break-word;
+}
+.check-del {
+    flex-shrink: 0;
+    opacity: 0.5;
+    transition: opacity 0.15s;
+}
+.check-del:hover { opacity: 1; }
+
+/* 添加入口 */
+.add-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 4px;
+    color: var(--md-sys-color-primary);
+    cursor: pointer;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background 0.15s;
+}
+.add-row:hover { background: var(--md-sys-color-surface-container-high); }
+.add-row .material-symbols-outlined { font-size: 22px; }
+
+/* 成就 */
+.achievement-title {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 20px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.achievement-title .material-symbols-outlined {
+    font-size: 18px;
+    color: var(--md-sys-color-primary);
+}
+.ach-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+}
+.ach-card {
+    background: var(--md-sys-color-surface-container);
+    border-radius: 12px;
+    padding: 14px 12px;
+    text-align: center;
+    transition: all 0.3s;
+    border: 1px solid transparent;
+}
+.ach-card.locked {
+    opacity: 0.45;
+}
+.ach-card.unlocked {
+    background: linear-gradient(135deg, #EADDFF, #F3EDF7);
+    border-color: var(--md-sys-color-primary);
+}
+.ach-icon {
+    font-size: 32px;
+    line-height: 1;
+    margin-bottom: 6px;
+    display: block;
+}
+.ach-card.unlocked .ach-icon {
+    color: var(--md-sys-color-primary);
+    font-variation-settings: 'FILL' 1;
+}
+.ach-card.locked .ach-icon {
+    color: var(--md-sys-color-on-surface-variant);
+}
+.ach-name {
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 18px;
+    margin-bottom: 2px;
+}
+.ach-desc {
+    font-size: 11px;
+    color: var(--md-sys-color-on-surface-variant);
+    line-height: 14px;
+}
+
+/* 空状态 */
+.empty-state { text-align: center; padding: 60px 20px; color: var(--md-sys-color-on-surface-variant); }
+.empty-state .material-symbols-outlined { font-size: 64px; color: var(--md-sys-color-outline-variant); margin-bottom: 16px; }
+
+.bottom-actions {
+    display: flex;
+    gap: 8px;
+    padding: 8px 0 16px;
+}
+.bottom-actions md-outlined-button { flex: 1; }
+
+md-icon { font-family: 'Material Symbols Outlined'; font-size: 24px; display: inline-flex; align-items: center; justify-content: center; }
+
+/* 添加物品弹层 */
+.add-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.32);
+    z-index: 300;
+    display: none; align-items: flex-end; justify-content: center;
+}
+.add-overlay.show { display: flex; }
+.add-sheet {
+    background: var(--md-sys-color-surface);
+    width: 100%; max-width: 600px;
+    border-top-left-radius: 28px; border-top-right-radius: 28px;
+    padding: 20px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+    animation: sheetUp 0.3s cubic-bezier(0.2, 0, 0, 1) forwards;
+    transform: translateY(100%);
+}
+@keyframes sheetUp { to { transform: translateY(0); } }
+.add-sheet h3 {
+    font-size: 18px;
+    font-weight: 500;
+    margin-bottom: 16px;
+}
+
+/* Toast */
+.toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1D1B20;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-size: 14px;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    max-width: 80%;
+    text-align: center;
+}
+.toast.show { opacity: 1; }
+</style>
+</head>
+<body>
+
+<header class="top-app-bar">
+    <div class="app-title">
+        <span class="material-symbols-outlined">checklist</span>
+        防灾清单
+    </div>
+    <div class="top-actions">
+        <md-icon-button onclick="resetCurrentCategory()" aria-label="重置当前分类">
+            <md-icon>restart_alt</md-icon>
+        </md-icon-button>
+        <md-icon-button onclick="openAddDialog()" aria-label="添加物品">
+            <md-icon>add</md-icon>
+        </md-icon-button>
+    </div>
+</header>
+
+<main class="main-content" id="mainContent"></main>
+
+<!-- 添加物品弹层 -->
+<div class="add-overlay" id="addOverlay">
+    <div class="add-sheet">
+        <h3>添加物品</h3>
+        <md-outlined-text-field id="addItemInput" label="物品名称" placeholder="如：应急毯" style="width:100%; margin-bottom:16px;"></md-outlined-text-field>
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
+            <md-text-button onclick="closeAddDialog()">取消</md-text-button>
+            <md-filled-button onclick="confirmAddItem()">添加</md-filled-button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ================= 默认数据 =================
+const DEFAULT_DATA = {
+    earthquake: {
+        name: '地震包',
+        icon: 'public',
+        items: [
+            { id: 'eq_water',  text: '饮用水（每人每天 3L，备 3 天）' },
+            { id: 'eq_food',   text: '压缩饼干 / 罐头 / 能量棒' },
+            { id: 'eq_flash',  text: '手电筒 + 备用电池' },
+            { id: 'eq_radio',  text: '手摇式收音机' },
+            { id: 'eq_med',    text: '急救包（创可贴、纱布、碘伏）' },
+            { id: 'eq_med2',   text: '常用药（止痛、止泻、降压）' },
+            { id: 'eq_glove',  text: '防滑手套 / 安全帽' },
+            { id: 'eq_whist',  text: '哨子（求救用）' },
+            { id: 'eq_mask',   text: 'N95 口罩 / 防尘面罩' },
+            { id: 'eq_power',  text: '充电宝（满电）' },
+            { id: 'eq_cash',   text: '现金（小面额）' },
+            { id: 'eq_copy',   text: '证件复印件（身份证 / 户口本）' }
+        ]
+    },
+    typhoon: {
+        name: '台风包',
+        icon: 'cyclone',
+        items: [
+            { id: 'ty_water',  text: '饮用水（每人每天 3L，备 3 天）' },
+            { id: 'ty_food',   text: '即食食品（罐头 / 面包 / 泡面）' },
+            { id: 'ty_flash',  text: '手电筒 + 备用电池' },
+            { id: 'ty_radio',  text: '电池式收音机' },
+            { id: 'ty_med',    text: '常用药 + 急救包' },
+            { id: 'ty_rain',   text: '雨衣 / 雨靴' },
+            { id: 'ty_towel',  text: '毛巾 / 吸水布' },
+            { id: 'ty_doc',    text: '证件 + 现金' },
+            { id: 'ty_power',  text: '充电宝（满电）' },
+            { id: 'ty_tape',   text: '胶带（贴窗用）' },
+            { id: 'ty_candle', text: '蜡烛 / 应急灯' },
+            { id: 'ty_rope',   text: '绳索 / 防水布' }
+        ]
+    },
+    fire: {
+        name: '火灾包',
+        icon: 'local_fire_department',
+        items: [
+            { id: 'fi_ext',    text: '灭火器（家用 ABC 型）' },
+            { id: 'fi_mask',   text: '防烟面罩 / N95 口罩' },
+            { id: 'fi_towel',  text: '湿毛巾（逃生用）' },
+            { id: 'fi_flash',  text: '手电筒' },
+            { id: 'fi_rope',   text: '逃生绳 / 缓降器' },
+            { id: 'fi_glove',  text: '防火手套' },
+            { id: 'fi_med',    text: '烫伤药膏 + 急救包' },
+            { id: 'fi_doc',    text: '证件 + 现金' },
+            { id: 'fi_whist',  text: '哨子' },
+            { id: 'fi_power',  text: '充电宝' }
+        ]
+    },
+    general: {
+        name: '通用',
+        icon: 'category',
+        items: [
+            { id: 'ge_water',  text: '家庭饮用水储备' },
+            { id: 'ge_food',   text: '家庭应急食品储备' },
+            { id: 'ge_tool',   text: '多功能工具刀 / 剪刀' },
+            { id: 'ge_tape',   text: '强力胶带 / 绝缘胶带' },
+            { id: 'ge_rope',   text: '绳索' },
+            { id: 'ge_doc',    text: '证件复印件（防水袋装）' },
+            { id: 'ge_cash',   text: '应急现金' },
+            { id: 'ge_plan',   text: '家庭逃生计划 + 集合点' },
+            { id: 'ge_contact',text: '紧急联系人清单' },
+            { id: 'ge_meet',   text: '家人集合点（户外）' }
+        ]
+    }
+};
+
+// ================= 成就 =================
+const ACHIEVEMENTS = [
+    { id: 'first',    icon: 'task_alt',          name: '第一步',     desc: '勾选第 1 项',    check: (s) => s.doneCount >= 1 },
+    { id: 'ten',      icon: 'school',            name: '入门',       desc: '勾选 10 项',     check: (s) => s.doneCount >= 10 },
+    { id: 'twenty',   icon: 'workspace_premium', name: '进阶',       desc: '勾选 20 项',     check: (s) => s.doneCount >= 20 },
+    { id: 'complete', icon: 'verified',          name: '全副武装',   desc: '全部勾选',       check: (s) => s.doneCount >= s.totalCount && s.totalCount > 0 },
+    { id: 'custom',   icon: 'edit',              name: '自定义达人', desc: '添加 1 项自定义', check: (s) => s.customCount >= 1 },
+    { id: 'custom5',  icon: 'auto_awesome',      name: '清单大师',   desc: '添加 5 项自定义', check: (s) => s.customCount >= 5 },
+    { id: 'allcat',   icon: 'category',          name: '全方位',     desc: '4 类各勾选 1 项', check: (s) => s.allCategoriesTouched },
+    { id: 'half',     icon: 'trending_up',       name: '过半',       desc: '进度 ≥ 50%',     check: (s) => s.percent >= 50 }
+];
+
+// ================= 状态 =================
+const STORAGE_KEY = 'md3_disaster_checklist';
+const CUSTOM_KEY = 'md3_disaster_custom';
+const CAT_KEY = 'md3_checklist_cat';
+
+let currentCat = localStorage.getItem(CAT_KEY) || 'earthquake';
+let checked = loadJSON(STORAGE_KEY, {});
+let customItems = loadJSON(CUSTOM_KEY, {});  // { catKey: [ {id, text} ] }
+let unlockedAchievements = loadJSON('md3_achievements', {});
+
+function loadJSON(key, fallback) {
+    try {
+        const v = JSON.parse(localStorage.getItem(key));
+        return v || fallback;
+    } catch (e) {
+        return fallback;
+    }
+}
+
+function saveJSON(key, val) {
+    localStorage.setItem(key, JSON.stringify(val));
+}
+
+// ================= 数据合并 =================
+// 返回当前分类的所有物品（默认 + 自定义）
+function getCategoryItems(catKey) {
+    const base = DEFAULT_DATA[catKey] ? [...DEFAULT_DATA[catKey].items] : [];
+    const custom = customItems[catKey] || [];
+    return [...base, ...custom];
+}
+
+// ================= 初始化 =================
+document.addEventListener('DOMContentLoaded', () => {
+    render();
+});
+
+// ================= 渲染 =================
+function render() {
+    const main = document.getElementById('mainContent');
+    main.innerHTML = '';
+
+    // 计算总进度（包含自定义）
+    const allItems = Object.keys(DEFAULT_DATA).flatMap(catKey => getCategoryItems(catKey));
+    const totalCount = allItems.length;
+    const doneCount = allItems.filter(i => checked[i.id]).length;
+    const percent = totalCount > 0 ? Math.round(doneCount / totalCount * 100) : 0;
+    const customCount = Object.values(customItems).flat().length;
+
+    // 检查"全方位"成就
+    const allCategoriesTouched = Object.keys(DEFAULT_DATA).every(catKey => {
+        const items = getCategoryItems(catKey);
+        return items.some(i => checked[i.id]);
+    });
+
+    // 成就状态
+    const stats = { doneCount, totalCount, percent, customCount, allCategoriesTouched };
+    checkAchievements(stats);
+
+    // 总进度卡片
+    const progressCard = document.createElement('div');
+    progressCard.className = 'progress-card';
+    progressCard.innerHTML = `
+        <div class="progress-label">总进度</div>
+        <div class="progress-num">${doneCount}<small> / ${totalCount}</small></div>
+        <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width:${percent}%;"></div>
+        </div>
+    `;
+    main.appendChild(progressCard);
+
+    // 分类 chips
+    const catChips = document.createElement('div');
+    catChips.className = 'cat-chips';
+    Object.keys(DEFAULT_DATA).forEach(key => {
+        const cat = DEFAULT_DATA[key];
+        const chip = document.createElement('md-filter-chip');
+        chip.label = cat.name;
+        chip.selected = (currentCat === key);
+        chip.onclick = () => {
+            currentCat = key;
+            localStorage.setItem(CAT_KEY, key);
+            render();
+        };
+        catChips.appendChild(chip);
+    });
+    main.appendChild(catChips);
+
+    // 当前分类清单
+    const cat = DEFAULT_DATA[currentCat];
+    if (!cat) return;
+
+    const list = document.createElement('div');
+    list.className = 'check-list';
+
+    const items = getCategoryItems(currentCat);
+    if (items.length === 0) {
+        list.innerHTML = `<div style="padding:20px; text-align:center; color:var(--md-sys-color-on-surface-variant); font-size:13px;">暂无物品</div>`;
+    } else {
+        items.forEach(item => {
+            const done = !!checked[item.id];
+            const row = document.createElement('label');
+            row.className = 'check-item' + (done ? ' checked' : '');
+            row.innerHTML = `
+                <md-checkbox touch-target="wrapper" ${done ? 'checked' : ''}></md-checkbox>
+                <div class="check-text">${escapeHtml(item.text)}</div>
+                ${item.isCustom ? `<md-icon-button class="check-del" onclick="event.preventDefault(); deleteCustomItem('${item.id}')" aria-label="删除">
+                    <md-icon>close</md-icon>
+                </md-icon-button>` : ''}
+            `;
+            const cb = row.querySelector('md-checkbox');
+            cb.onchange = () => toggleItem(item.id);
+            list.appendChild(row);
+        });
+    }
+    main.appendChild(list);
+
+    // 添加物品入口
+    const addRow = document.createElement('div');
+    addRow.className = 'add-row';
+    addRow.innerHTML = `<span class="material-symbols-outlined">add_circle</span>添加自定义物品`;
+    addRow.onclick = () => openAddDialog();
+    main.appendChild(addRow);
+
+    // 成就
+    const achTitle = document.createElement('div');
+    achTitle.className = 'achievement-title';
+    achTitle.innerHTML = `<span class="material-symbols-outlined">emoji_events</span>成就`;
+    main.appendChild(achTitle);
+
+    const achGrid = document.createElement('div');
+    achGrid.className = 'ach-grid';
+    ACHIEVEMENTS.forEach(a => {
+        const unlocked = !!unlockedAchievements[a.id];
+        const card = document.createElement('div');
+        card.className = 'ach-card ' + (unlocked ? 'unlocked' : 'locked');
+        card.innerHTML = `
+            <span class="material-symbols-outlined ach-icon">${a.icon}</span>
+            <div class="ach-name">${escapeHtml(a.name)}</div>
+            <div class="ach-desc">${escapeHtml(a.desc)}</div>
+        `;
+        achGrid.appendChild(card);
+    });
+    main.appendChild(achGrid);
+
+    // 底部操作
+    const actions = document.createElement('div');
+    actions.className = 'bottom-actions';
+    actions.innerHTML = `
+        <md-outlined-button onclick="resetCurrentCategory()">
+            <md-icon slot="icon">restart_alt</md-icon>
+            重置当前分类
+        </md-outlined-button>
+        <md-outlined-button onclick="resetAll()" style="--md-outlined-button-label-text-color: var(--md-sys-color-error);">
+            <md-icon slot="icon" style="color: var(--md-sys-color-error);">delete_forever</md-icon>
+            全部清空
+        </md-outlined-button>
+    `;
+    main.appendChild(actions);
+}
+
+// ================= 勾选 =================
+function toggleItem(id) {
+    if (checked[id]) {
+        delete checked[id];
+    } else {
+        checked[id] = true;
+    }
+    saveJSON(STORAGE_KEY, checked);
+    render();
+}
+
+// ================= 自定义物品 =================
+function openAddDialog() {
+    document.getElementById('addItemInput').value = '';
+    document.getElementById('addOverlay').classList.add('show');
+    setTimeout(() => document.getElementById('addItemInput').focus(), 100);
+
+    document.getElementById('addOverlay').onclick = (e) => {
+        if (e.target.id === 'addOverlay') closeAddDialog();
+    };
+}
+
+function closeAddDialog() {
+    document.getElementById('addOverlay').classList.remove('show');
+}
+
+function confirmAddItem() {
+    const input = document.getElementById('addItemInput');
+    const text = input.value.trim();
+    if (!text) {
+        showToast('请输入物品名称');
+        return;
+    }
+    if (!customItems[currentCat]) customItems[currentCat] = [];
+    customItems[currentCat].push({
+        id: 'custom_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        text: text,
+        isCustom: true
+    });
+    saveJSON(CUSTOM_KEY, customItems);
+    closeAddDialog();
+    render();
+    showToast('已添加');
+}
+
+function deleteCustomItem(id) {
+    if (!confirm('确定删除这个自定义物品吗？')) return;
+    Object.keys(customItems).forEach(catKey => {
+        customItems[catKey] = customItems[catKey].filter(i => i.id !== id);
+        if (customItems[catKey].length === 0) delete customItems[catKey];
+    });
+    delete checked[id];
+    saveJSON(CUSTOM_KEY, customItems);
+    saveJSON(STORAGE_KEY, checked);
+    render();
+    showToast('已删除');
+}
+
+// ================= 成就 =================
+function checkAchievements(stats) {
+    let newlyUnlocked = [];
+    ACHIEVEMENTS.forEach(a => {
+        if (!unlockedAchievements[a.id] && a.check(stats)) {
+            unlockedAchievements[a.id] = true;
+            newlyUnlocked.push(a);
+        }
+    });
+    if (newlyUnlocked.length > 0) {
+        saveJSON('md3_achievements', unlockedAchievements);
+        newlyUnlocked.forEach((a, i) => {
+            setTimeout(() => {
+                showToast(`🏆 解锁成就：${a.name}`);
+            }, i * 600);
+        });
+    }
+}
+
+// ================= 重置 =================
+function resetCurrentCategory() {
+    const cat = DEFAULT_DATA[currentCat];
+    if (!cat) return;
+    if (!confirm(`确定重置「${cat.name}」的勾选状态吗？`)) return;
+    getCategoryItems(currentCat).forEach(item => {
+        delete checked[item.id];
+    });
+    saveJSON(STORAGE_KEY, checked);
+    render();
+    showToast('已重置当前分类');
+}
+
+function resetAll() {
+    if (!confirm('确定清空所有分类的勾选状态吗？')) return;
+    checked = {};
+    saveJSON(STORAGE_KEY, checked);
+    render();
+    showToast('已全部清空');
+}
+
+// ================= 工具 =================
+function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+}
+
+function showToast(msg) {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        toast.className = 'toast';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => toast.classList.remove('show'), 2000);
+}
+</script>
+
+</body>
+</html>

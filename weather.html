@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>天气</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+<script type="importmap">
+    { "imports": { "@material/web/": "https://esm.sh/@material/web@2.0.0/" } }
+</script>
+<script type="module">
+    import '@material/web/all.js';
+</script>
+<style>
+:root {
+    --md-sys-color-primary: #6750A4;
+    --md-sys-color-on-primary: #FFFFFF;
+    --md-sys-color-primary-container: #EADDFF;
+    --md-sys-color-on-primary-container: #21005D;
+    --md-sys-color-secondary-container: #E8DEF8;
+    --md-sys-color-on-secondary-container: #1D192B;
+    --md-sys-color-surface: #FEF7FF;
+    --md-sys-color-on-surface: #1D1B20;
+    --md-sys-color-surface-container: #F3EDF7;
+    --md-sys-color-surface-container-high: #ECE6F0;
+    --md-sys-color-on-surface-variant: #49454F;
+    --md-sys-color-outline: #79747E;
+    --md-sys-color-outline-variant: #CAC4D0;
+    --md-sys-color-error: #B3261E;
+    --md-sys-shape-corner-small: 8px;
+    --md-sys-shape-corner-medium: 12px;
+    --md-sys-shape-corner-large: 16px;
+    --md-sys-shape-corner-extra-large: 28px;
+    --app-font-family: 'Google Sans', 'Roboto', 'Noto Sans SC', system-ui, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--app-font-family); -webkit-tap-highlight-color: transparent; }
+body { background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 32px; }
+
+.top-app-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px;
+    position: sticky; top: 0;
+    background: var(--md-sys-color-surface);
+    z-index: 30;
+}
+.app-title { font-size: 20px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+.app-title .material-symbols-outlined { color: var(--md-sys-color-primary); font-size: 24px; font-variation-settings: 'FILL' 1; }
+.top-actions { display: flex; align-items: center; gap: 4px; }
+
+.main-content { flex: 1; padding: 0 16px; max-width: 700px; margin: 0 auto; width: 100%; }
+
+/* 当前天气大卡片 */
+.current-card {
+    background: linear-gradient(135deg, #6750A4, #8B6FD4);
+    color: white;
+    border-radius: var(--md-sys-shape-corner-extra-large);
+    padding: 28px 24px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+    animation: fadeIn 0.4s ease;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.current-location {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 14px;
+    opacity: 0.9;
+    margin-bottom: 16px;
+}
+.current-location .material-symbols-outlined { font-size: 18px; }
+
+.current-main {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+}
+.current-temp {
+    font-size: 72px;
+    font-weight: 500;
+    line-height: 1;
+    letter-spacing: -3px;
+}
+.current-desc {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+.current-desc .material-symbols-outlined {
+    font-size: 56px;
+    font-variation-settings: 'FILL' 1;
+    opacity: 0.9;
+}
+.current-desc-text { font-size: 16px; font-weight: 500; }
+
+.current-details {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+.current-detail-item {
+    text-align: center;
+    padding: 10px 4px;
+    background: rgba(255,255,255,0.15);
+    border-radius: 12px;
+}
+.current-detail-value {
+    font-size: 16px;
+    font-weight: 600;
+}
+.current-detail-label {
+    font-size: 11px;
+    opacity: 0.85;
+    margin-top: 4px;
+}
+
+.section-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--md-sys-color-on-surface);
+    margin: 20px 0 12px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.section-title .material-symbols-outlined {
+    font-size: 18px;
+    color: var(--md-sys-color-primary);
+}
+
+/* 未来 7 天 */
+.daily-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    background: var(--md-sys-color-surface-container);
+    border-radius: var(--md-sys-shape-corner-large);
+    padding: 8px 16px;
+    animation: fadeIn 0.4s ease;
+}
+.daily-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+.daily-item:last-child { border-bottom: none; }
+.daily-day {
+    font-size: 14px;
+    color: var(--md-sys-color-on-surface);
+    min-width: 60px;
+    font-weight: 500;
+}
+.daily-icon {
+    font-size: 22px;
+    color: var(--md-sys-color-primary);
+    margin-right: 12px;
+    font-variation-settings: 'FILL' 1;
+}
+.daily-desc {
+    flex: 1;
+    font-size: 13px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+.daily-temp {
+    font-size: 14px;
+    color: var(--md-sys-color-on-surface);
+    font-weight: 500;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+.daily-temp-min { color: var(--md-sys-color-on-surface-variant); font-weight: 400; }
+
+/* 逐小时 */
+.hourly-scroll {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 12px 4px 4px;
+    scrollbar-width: none;
+    background: var(--md-sys-color-surface-container);
+    border-radius: var(--md-sys-shape-corner-large);
+    animation: fadeIn 0.4s ease;
+}
+.hourly-scroll::-webkit-scrollbar { display: none; }
+.hourly-item {
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    min-width: 60px;
+}
+.hourly-time {
+    font-size: 12px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+.hourly-icon {
+    font-size: 22px;
+    color: var(--md-sys-color-primary);
+    font-variation-settings: 'FILL' 1;
+}
+.hourly-temp {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--md-sys-color-on-surface);
+}
+
+/* ===== 空气质量 ===== */
+.aqi-card {
+    background: var(--md-sys-color-surface-container);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 12px;
+    animation: fadeIn 0.4s ease;
+}
+.aqi-main {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 16px;
+}
+.aqi-num-box {
+    width: 88px;
+    height: 88px;
+    border-radius: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: white;
+    line-height: 1;
+}
+.aqi-num {
+    font-size: 32px;
+    font-weight: 700;
+    line-height: 1;
+}
+.aqi-unit {
+    font-size: 12px;
+    opacity: 0.85;
+    margin-top: 4px;
+}
+.aqi-label {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+.aqi-sub {
+    font-size: 13px;
+    color: var(--md-sys-color-on-surface-variant);
+    line-height: 1.5;
+}
+
+.pollutant-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+.pollutant-item {
+    background: var(--md-sys-color-surface);
+    border-radius: 12px;
+    padding: 10px 8px;
+    text-align: center;
+}
+.pollutant-value {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--md-sys-color-on-surface);
+    line-height: 1.2;
+}
+.pollutant-label {
+    font-size: 11px;
+    color: var(--md-sys-color-on-surface-variant);
+    margin-top: 4px;
+}
+
+.aqi-trend {
+    background: var(--md-sys-color-surface-container);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    animation: fadeIn 0.4s ease;
+}
+.aqi-trend-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    color: var(--md-sys-color-on-surface);
+}
+.aqi-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 60px;
+}
+.aqi-bar {
+    flex: 1;
+    min-width: 4px;
+    border-radius: 3px 3px 0 0;
+    transition: height 0.3s;
+}
+.aqi-bar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: var(--md-sys-color-on-surface-variant);
+    margin-top: 6px;
+}
+
+/* 城市搜索弹窗 */
+.search-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.4); z-index: 300;
+    display: none; align-items: flex-start; justify-content: center;
+    padding-top: 60px;
+}
+.search-overlay.show { display: flex; }
+.search-box {
+    background: var(--md-sys-color-surface);
+    width: 90%; max-width: 500px;
+    border-radius: 28px;
+    padding: 20px;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    animation: searchDrop 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+@keyframes searchDrop { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+.search-input-row { display: flex; align-items: center; gap: 8px; width: 100%; }
+.search-results { overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+.search-result-item {
+    padding: 12px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--md-sys-color-on-surface);
+    transition: background 0.15s;
+}
+.search-result-item:hover { background: var(--md-sys-color-surface-container); }
+.search-result-item .search-sub {
+    font-size: 12px;
+    color: var(--md-sys-color-on-surface-variant);
+    margin-top: 2px;
+}
+
+.loading-center {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 60px 20px; gap: 16px;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 14px;
+}
+.empty-state {
+    text-align: center; padding: 60px 20px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+.empty-state .material-symbols-outlined {
+    font-size: 64px;
+    color: var(--md-sys-color-outline-variant);
+    margin-bottom: 16px;
+}
+.empty-state h3 { font-size: 16px; margin-bottom: 8px; color: var(--md-sys-color-on-surface); }
+
+.full-screen-settings {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--md-sys-color-surface); z-index: 400;
+    display: none; flex-direction: column;
+    transform: translateY(100%);
+    animation: slideUp 0.3s forwards cubic-bezier(0.2, 0, 0, 1);
+    overflow: hidden;
+}
+.full-screen-settings.show { display: flex; }
+.settings-top-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 16px; flex-shrink: 0;
+}
+.settings-top-bar .title { font-size: 18px; font-weight: 500; }
+.settings-content {
+    flex: 1; overflow-y: auto;
+    padding: 16px 24px 120px 24px;
+    display: flex; flex-direction: column; gap: 24px;
+}
+@keyframes slideUp { to { transform: translateY(0); } }
+
+.md-input-group { display: flex; flex-direction: column; gap: 8px; }
+.md-input-group label {
+    font-size: 14px;
+    color: var(--md-sys-color-on-surface-variant);
+    font-weight: 500;
+}
+.md-input-group .hint {
+    font-size: 12px;
+    color: var(--md-sys-color-on-surface-variant);
+    line-height: 1.5;
+}
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+md-icon {
+    font-family: 'Material Symbols Outlined';
+    font-size: 24px;
+    display: inline-flex; align-items: center; justify-content: center;
+}
+</style>
+</head>
+<body>
+
+<header class="top-app-bar">
+    <div class="app-title">
+        <span class="material-symbols-outlined">wb_sunny</span>
+        天气
+    </div>
+    <div class="top-actions">
+        <md-icon-button onclick="openCitySearch()" aria-label="搜索城市">
+            <md-icon>search</md-icon>
+        </md-icon-button>
+        <md-icon-button onclick="loadWeather()" aria-label="刷新">
+            <md-icon>refresh</md-icon>
+        </md-icon-button>
+        <md-icon-button onclick="openSettings()" aria-label="设置">
+            <md-icon>settings</md-icon>
+        </md-icon-button>
+    </div>
+</header>
+
+<main class="main-content" id="mainContent">
+    <div class="loading-center">
+        <md-circular-progress indeterminate style="--md-circular-progress-size:32px;"></md-circular-progress>
+        <span>正在加载天气…</span>
+    </div>
+</main>
+
+<!-- 城市搜索弹窗 -->
+<div class="search-overlay" id="searchOverlay">
+    <div class="search-box">
+        <div class="search-input-row">
+            <md-outlined-text-field id="cityInput" label="搜索城市" placeholder="如 北京、上海" style="width:100%;">
+                <md-icon slot="leading-icon">search</md-icon>
+            </md-outlined-text-field>
+        </div>
+        <div style="display:flex; justify-content:flex-end;">
+            <md-text-button onclick="closeCitySearch()">取消</md-text-button>
+        </div>
+        <div class="search-results" id="searchResults"></div>
+    </div>
+</div>
+
+<!-- 设置面板 -->
+<div class="full-screen-settings" id="settingsOverlay">
+    <div class="settings-top-bar">
+        <span style="width:48px"></span>
+        <span class="title">设置</span>
+        <md-icon-button onclick="closeSettings()" aria-label="关闭">
+            <md-icon>close</md-icon>
+        </md-icon-button>
+    </div>
+    <div class="settings-content">
+        <div class="md-input-group">
+            <label>温度单位</label>
+            <div class="chip-row" id="tempUnitSelector">
+                <md-filter-chip data-unit="c" label="摄氏度 °C" onclick="selectTempUnit('c')"></md-filter-chip>
+                <md-filter-chip data-unit="f" label="华氏度 °F" onclick="selectTempUnit('f')"></md-filter-chip>
+            </div>
+        </div>
+        <div class="md-input-group">
+            <label>风速单位</label>
+            <div class="chip-row" id="windUnitSelector">
+                <md-filter-chip data-unit="kmh" label="km/h" onclick="selectWindUnit('kmh')"></md-filter-chip>
+                <md-filter-chip data-unit="ms" label="m/s" onclick="selectWindUnit('ms')"></md-filter-chip>
+            </div>
+        </div>
+        <div class="md-input-group">
+            <label>默认城市</label>
+            <div class="hint" id="defaultCityHint">当前：北京</div>
+            <md-outlined-button onclick="resetToDefault()" style="width:100%;">
+                <md-icon slot="icon">restart_alt</md-icon>
+                回到默认城市
+            </md-outlined-button>
+        </div>
+        <div class="md-input-group">
+            <md-outlined-text-field id="amapKeyInput" label="高德地图 API Key" placeholder="粘贴你的高德 Key" style="width:100%;"></md-outlined-text-field>
+            <div class="hint">去 lbs.amap.com 免费注册，用于搜索中文城市。不填则用内置列表。</div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ================= 配置 =================
+const WEATHER_API = 'https://api.open-meteo.com/v1/forecast';
+const DEFAULT_CITY = { name: '北京', latitude: 39.9042, longitude: 116.4074 };
+
+let settings = JSON.parse(localStorage.getItem('md3_weather_settings')) || {
+    tempUnit: 'c',
+    windUnit: 'kmh',
+    city: DEFAULT_CITY,
+    amapKey: ''
+};
+
+let currentCity = settings.city || DEFAULT_CITY;
+
+// ================= 初始化 =================
+document.addEventListener('DOMContentLoaded', () => {
+    initSettingsUI();
+
+    const cityInput = document.getElementById('cityInput');
+    if (cityInput) {
+        let searchTimer = null;
+        cityInput.addEventListener('input', () => {
+            clearTimeout(searchTimer);
+            const kw = cityInput.value.trim();
+            if (!kw) {
+                document.getElementById('searchResults').innerHTML = '';
+                return;
+            }
+            searchTimer = setTimeout(() => searchCity(kw), 400);
+        });
+    }
+
+    if (!localStorage.getItem('md3_weather_initialized')) {
+        tryGeolocation();
+    } else {
+        loadWeather();
+    }
+});
+
+// ================= 定位 =================
+function tryGeolocation() {
+    const main = document.getElementById('mainContent');
+    if (!navigator.geolocation) {
+        localStorage.setItem('md3_weather_initialized', '1');
+        loadWeather();
+        return;
+    }
+
+    main.innerHTML = `
+        <div class="loading-center">
+            <md-circular-progress indeterminate style="--md-circular-progress-size:32px;"></md-circular-progress>
+            <span>正在获取位置…</span>
+        </div>
+    `;
+
+    const timeout = setTimeout(() => {
+        localStorage.setItem('md3_weather_initialized', '1');
+        loadWeather();
+    }, 5000);
+
+    navigator.geolocation.getCurrentPosition(
+        (pos) => {
+            clearTimeout(timeout);
+            currentCity = {
+                name: '当前位置',
+                latitude: pos.coords.latitude,
+                longitude: pos.coords.longitude
+            };
+            settings.city = currentCity;
+            localStorage.setItem('md3_weather_settings', JSON.stringify(settings));
+            localStorage.setItem('md3_weather_initialized', '1');
+            loadWeather();
+        },
+        (err) => {
+            clearTimeout(timeout);
+            localStorage.setItem('md3_weather_initialized', '1');
+            loadWeather();
+        },
+        { timeout: 5000, enableHighAccuracy: false, maximumAge: 600000 }
+    );
+}
+
+// ================= 加载天气 =================
+async function loadWeather() {
+    const main = document.getElementById('mainContent');
+    main.innerHTML = `
+        <div class="loading-center">
+            <md-circular-progress indeterminate style="--md-circular-progress-size:32px;"></md-circular-progress>
+            <span>正在加载天气…</span>
+        </div>
+    `;
+
+    try {
+        const tempUnit = settings.tempUnit === 'f' ? 'fahrenheit' : 'celsius';
+        const windUnit = settings.windUnit === 'ms' ? 'ms' : 'kmh';
+
+        const url = `${WEATHER_API}?latitude=${currentCity.latitude}&longitude=${currentCity.longitude}` +
+            `&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,surface_pressure` +
+            `&daily=weather_code,temperature_2m_max,temperature_2m_min&hourly=temperature_2m,weather_code` +
+            `&timezone=auto&forecast_days=7` +
+            `&temperature_unit=${tempUnit}&wind_speed_unit=${windUnit}`;
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+
+        renderWeather(data);
+    } catch (e) {
+        console.error(e);
+        main.innerHTML = `
+            <div class="empty-state">
+                <span class="material-symbols-outlined">cloud_off</span>
+                <h3>加载失败</h3>
+                <p>${escapeHtml(e.message)}</p>
+                <div style="margin-top:16px;">
+                    <md-outlined-button onclick="loadWeather()">
+                        <md-icon slot="icon">refresh</md-icon>
+                        重试
+                    </md-outlined-button>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// ================= 渲染天气 =================
+function renderWeather(data) {
+    const main = document.getElementById('mainContent');
+    const cur = data.current;
+    const daily = data.daily;
+    const hourly = data.hourly;
+
+    const windUnitSymbol = settings.windUnit === 'ms' ? ' m/s' : ' km/h';
+    const curInfo = getWeatherInfo(cur.weather_code);
+
+    let html = `
+        <div class="current-card">
+            <div class="current-location">
+                <span class="material-symbols-outlined">location_on</span>
+                <span>${escapeHtml(currentCity.name)}</span>
+            </div>
+            <div class="current-main">
+                <div class="current-temp">${Math.round(cur.temperature_2m)}°</div>
+                <div class="current-desc">
+                    <span class="material-symbols-outlined">${curInfo.icon}</span>
+                    <span class="current-desc-text">${curInfo.label}</span>
+                </div>
+            </div>
+            <div class="current-details">
+                <div class="current-detail-item">
+                    <div class="current-detail-value">${Math.round(cur.apparent_temperature)}°</div>
+                    <div class="current-detail-label">体感</div>
+                </div>
+                <div class="current-detail-item">
+                    <div class="current-detail-value">${cur.relative_humidity_2m}%</div>
+                    <div class="current-detail-label">湿度</div>
+                </div>
+                <div class="current-detail-item">
+                    <div class="current-detail-value">${Math.round(cur.wind_speed_10m)}${windUnitSymbol}</div>
+                    <div class="current-detail-label">风速</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // 未来 7 天
+    html += `<div class="section-title"><span class="material-symbols-outlined">calendar_today</span>未来 7 天</div>`;
+    html += `<div class="daily-list">`;
+    for (let i = 0; i < daily.time.length; i++) {
+        const date = new Date(daily.time[i] + 'T00:00:00');
+        const dayName = formatDayName(date, i);
+        const info = getWeatherInfo(daily.weather_code[i]);
+        const maxT = Math.round(daily.temperature_2m_max[i]);
+        const minT = Math.round(daily.temperature_2m_min[i]);
+        html += `
+            <div class="daily-item">
+                <div class="daily-day">${dayName}</div>
+                <span class="material-symbols-outlined daily-icon">${info.icon}</span>
+                <div class="daily-desc">${info.label}</div>
+                <div class="daily-temp">
+                    <span>${maxT}°</span>
+                    <span class="daily-temp-min">${minT}°</span>
+                </div>
+            </div>
+        `;
+    }
+    html += `</div>`;
+
+    // 逐小时
+    html += `<div class="section-title"><span class="material-symbols-outlined">schedule</span>未来 24 小时</div>`;
+    html += `<div class="hourly-scroll">`;
+
+    const now = new Date();
+    const currentHourIndex = hourly.time.findIndex(t => new Date(t) >= now);
+    const startIdx = currentHourIndex >= 0 ? currentHourIndex : 0;
+
+    for (let i = startIdx; i < Math.min(startIdx + 24, hourly.time.length); i++) {
+        const time = new Date(hourly.time[i]);
+        const hourLabel = `${String(time.getHours()).padStart(2, '0')}:00`;
+        const info = getWeatherInfo(hourly.weather_code[i]);
+        const temp = Math.round(hourly.temperature_2m[i]);
+        html += `
+            <div class="hourly-item">
+                <div class="hourly-time">${hourLabel}</div>
+                <span class="material-symbols-outlined hourly-icon">${info.icon}</span>
+                <div class="hourly-temp">${temp}°</div>
+            </div>
+        `;
+    }
+    html += `</div>`;
+
+    main.innerHTML = html;
+
+    // ===== 空气质量分区 =====
+    let airSection = document.getElementById('airQualitySection');
+    if (!airSection) {
+        airSection = document.createElement('div');
+        airSection.id = 'airQualitySection';
+        main.appendChild(airSection);
+    }
+    loadAirQuality();
+}
+
+function formatDayName(date, index) {
+    if (index === 0) return '今天';
+    if (index === 1) return '明天';
+    const days = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    return days[date.getDay()];
+}
+
+// ================= WMO 天气码 =================
+function getWeatherInfo(code) {
+    const map = {
+        0:  { label: '晴',            icon: 'wb_sunny' },
+        1:  { label: '大部晴朗',       icon: 'wb_sunny' },
+        2:  { label: '多云',           icon: 'partly_cloudy_day' },
+        3:  { label: '阴',             icon: 'cloud' },
+        45: { label: '雾',             icon: 'foggy' },
+        48: { label: '霜雾',           icon: 'foggy' },
+        51: { label: '毛毛雨',         icon: 'rainy' },
+        53: { label: '小雨',           icon: 'rainy' },
+        55: { label: '中雨',           icon: 'rainy' },
+        56: { label: '冻毛毛雨',       icon: 'weather_mix' },
+        57: { label: '冻雨',           icon: 'weather_mix' },
+        61: { label: '小雨',           icon: 'rainy' },
+        63: { label: '中雨',           icon: 'rainy' },
+        65: { label: '大雨',           icon: 'rainy' },
+        66: { label: '冻雨',           icon: 'weather_mix' },
+        67: { label: '强冻雨',         icon: 'weather_mix' },
+        71: { label: '小雪',           icon: 'weather_snowy' },
+        73: { label: '中雪',           icon: 'weather_snowy' },
+        75: { label: '大雪',           icon: 'weather_snowy' },
+        77: { label: '雪粒',           icon: 'weather_snowy' },
+        80: { label: '阵雨',           icon: 'rainy' },
+        81: { label: '中阵雨',         icon: 'rainy' },
+        82: { label: '强阵雨',         icon: 'rainy' },
+        85: { label: '阵雪',           icon: 'weather_snowy' },
+        86: { label: '强阵雪',         icon: 'weather_snowy' },
+        95: { label: '雷阵雨',         icon: 'thunderstorm' },
+        96: { label: '雷阵雨伴冰雹',   icon: 'thunderstorm' },
+        99: { label: '强雷暴伴冰雹',   icon: 'thunderstorm' }
+    };
+    return map[code] || { label: '未知', icon: 'help' };
+}
+
+// ================= 空气质量 =================
+async function loadAirQuality() {
+    const section = document.getElementById('airQualitySection');
+    if (!section) return;
+
+    try {
+        const url = `https://air-quality-api.open-meteo.com/v1/air-quality` +
+            `?latitude=${currentCity.latitude}&longitude=${currentCity.longitude}` +
+            `&current=pm10,pm2_5,carbon_monoxide,nitrogen_dioxide,sulphur_dioxide,ozone,us_aqi,european_aqi,uv_index` +
+            `&hourly=us_aqi` +
+            `&timezone=auto&forecast_days=2`;
+
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+
+        renderAirQuality(data);
+    } catch (e) {
+        console.error(e);
+        section.innerHTML = `
+            <div class="empty-state" style="padding: 30px 20px;">
+                <span class="material-symbols-outlined">cloud_off</span>
+                <p>空气质量加载失败</p>
+            </div>
+        `;
+    }
+}
+
+function renderAirQuality(data) {
+    const section = document.getElementById('airQualitySection');
+    if (!section) return;
+
+    const cur = data.current || {};
+    const hourly = data.hourly || {};
+
+    const aqi = cur.us_aqi;
+    const aqiStyle = getAqiStyle(aqi);
+    const aqiLabel = getAqiLabel(aqi);
+
+    let html = '';
+
+    html += `
+        <div class="aqi-card">
+            <div class="aqi-main">
+                <div class="aqi-num-box" style="background:${aqiStyle.bg}; color:${aqiStyle.fg};">
+                    <div class="aqi-num">${aqi != null ? aqi : '—'}</div>
+                    <div class="aqi-unit">AQI</div>
+                </div>
+                <div>
+                    <div class="aqi-label" style="color:${aqiStyle.bg};">${aqiLabel}</div>
+                    <div class="aqi-sub">紫外线指数：${cur.uv_index != null ? cur.uv_index : '—'}</div>
+                </div>
+            </div>
+            <div class="pollutant-grid">
+                ${pollutantCard('PM2.5', cur.pm2_5)}
+                ${pollutantCard('PM10', cur.pm10)}
+                ${pollutantCard('O₃', cur.ozone)}
+                ${pollutantCard('NO₂', cur.nitrogen_dioxide)}
+                ${pollutantCard('SO₂', cur.sulphur_dioxide)}
+                ${pollutantCard('CO', cur.carbon_monoxide)}
+            </div>
+        </div>
+    `;
+
+    // 24 小时 AQI 趋势
+    if (hourly.time && hourly.us_aqi) {
+        const now = new Date();
+        const startIdx = hourly.time.findIndex(t => new Date(t) >= now);
+        const idx0 = startIdx >= 0 ? startIdx : 0;
+        const slice = hourly.us_aqi.slice(idx0, idx0 + 24);
+        const sliceTime = hourly.time.slice(idx0, idx0 + 24);
+
+        const maxAqi = Math.max(...slice.filter(v => v != null), 100);
+        const bars = slice.map(v => {
+            if (v == null) return '';
+            const style = getAqiStyle(v);
+            const h = Math.max(4, Math.round((v / maxAqi) * 60));
+            return `<div class="aqi-bar" style="height:${h}px; background:${style.bg};" title="${v}"></div>`;
+        }).join('');
+
+        const t0 = sliceTime[0] ? formatHour(sliceTime[0]) : '';
+        const tMid = sliceTime[Math.floor(sliceTime.length / 2)] ? formatHour(sliceTime[Math.floor(sliceTime.length / 2)]) : '';
+        const tEnd = sliceTime[sliceTime.length - 1] ? formatHour(sliceTime[sliceTime.length - 1]) : '';
+
+        html += `
+            <div class="aqi-trend">
+                <div class="aqi-trend-title">未来 24 小时 AQI 趋势</div>
+                <div class="aqi-bars">${bars}</div>
+                <div class="aqi-bar-labels">
+                    <span>${t0}</span>
+                    <span>${tMid}</span>
+                    <span>${tEnd}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    section.innerHTML = html;
+}
+
+function pollutantCard(name, value) {
+    return `
+        <div class="pollutant-item">
+            <div class="pollutant-value">${value != null ? Math.round(value) : '—'}</div>
+            <div class="pollutant-label">${name}</div>
+        </div>
+    `;
+}
+
+function getAqiStyle(aqi) {
+    // 优化后的国标配色：保留色相，降低饱和度/亮度，保护眼睛
+    if (aqi == null) return { bg: '#9E9E9E', fg: '#FFFFFF' };
+    if (aqi <= 50)  return { bg: '#4CAF50', fg: '#FFFFFF' };  // 优（柔和的绿，非纯绿 #00E400）
+    if (aqi <= 100) return { bg: '#FBC02D', fg: '#1D1B20' };  // 良（深一点的黄，非纯黄 #FFFF00）
+    if (aqi <= 150) return { bg: '#F57C00', fg: '#FFFFFF' };  // 轻度（柔和的橙，非纯橙 #FF7E00）
+    if (aqi <= 200) return { bg: '#E53935', fg: '#FFFFFF' };  // 中度（柔和的红，非纯红 #FF0000）
+    if (aqi <= 300) return { bg: '#8E24AA', fg: '#FFFFFF' };  // 重度（柔和的紫，非纯紫 #99004C）
+    return { bg: '#6D1B29', fg: '#FFFFFF' };                  // 严重（柔和的褐红，非纯褐红 #7E0023）
+}
+
+function getAqiLabel(aqi) {
+    if (aqi == null) return '未知';
+    if (aqi <= 50)  return '优';
+    if (aqi <= 100) return '良';
+    if (aqi <= 150) return '轻度污染';
+    if (aqi <= 200) return '中度污染';
+    if (aqi <= 300) return '重度污染';
+    return '严重污染';
+}
+
+function formatHour(t) {
+    const d = new Date(t);
+    return `${String(d.getHours()).padStart(2, '0')}:00`;
+}
+
+// ================= 城市搜索 =================
+function openCitySearch() {
+    document.getElementById('searchOverlay').classList.add('show');
+    document.getElementById('cityInput').value = '';
+    document.getElementById('searchResults').innerHTML = '';
+    setTimeout(() => document.getElementById('cityInput').focus(), 100);
+
+    document.getElementById('searchOverlay').onclick = (e) => {
+        if (e.target.id === 'searchOverlay') closeCitySearch();
+    };
+}
+
+function closeCitySearch() {
+    document.getElementById('searchOverlay').classList.remove('show');
+}
+
+async function searchCity(keyword) {
+    const results = document.getElementById('searchResults');
+    const kw = keyword.trim();
+    if (!kw) {
+        results.innerHTML = '';
+        return;
+    }
+
+    if (!settings.amapKey) {
+        return searchCityLocal(kw);
+    }
+
+    results.innerHTML = '<div style="padding:16px; text-align:center; color:var(--md-sys-color-on-surface-variant); font-size:13px;">搜索中…</div>';
+
+    try {
+        const url = `https://restapi.amap.com/v3/place/text?keywords=${encodeURIComponent(kw)}&types=190000&city=全国&offset=10&page=1&extensions=base&key=${settings.amapKey}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+
+        if (data.status !== '1') {
+            throw new Error(data.info || '高德接口返回错误');
+        }
+
+        if (!data.pois || data.pois.length === 0) {
+            results.innerHTML = '<div style="padding:16px; text-align:center; color:var(--md-sys-color-on-surface-variant); font-size:13px;">没有找到匹配的城市</div>';
+            return;
+        }
+
+        results.innerHTML = '';
+        data.pois.forEach(poi => {
+            const name = poi.name || '';
+            const lngLat = poi.location || '';
+            if (!lngLat) return;
+
+            const [lng, lat] = lngLat.split(',').map(Number);
+            if (isNaN(lng) || isNaN(lat)) return;
+
+            const province = poi.pname || '';
+            const city = poi.cityname || '';
+            const sub = [province, city].filter(Boolean).join(' · ');
+
+            const item = document.createElement('div');
+            item.className = 'search-result-item';
+            item.innerHTML = `
+                <div>${escapeHtml(name)}</div>
+                ${sub ? `<div class="search-sub">${escapeHtml(sub)}</div>` : ''}
+            `;
+            item.onclick = () => {
+                currentCity = { name: name, latitude: lat, longitude: lng };
+                settings.city = currentCity;
+                localStorage.setItem('md3_weather_settings', JSON.stringify(settings));
+                closeCitySearch();
+                loadWeather();
+            };
+            results.appendChild(item);
+        });
+    } catch (e) {
+        console.error(e);
+        results.innerHTML = `<div style="padding:16px; text-align:center; color:var(--md-sys-color-error); font-size:13px;">搜索失败：${escapeHtml(e.message)}</div>`;
+    }
+}
+
+const FALLBACK_CITIES = [
+    { name: '北京',     latitude: 39.9042, longitude: 116.4074, province: '北京市' },
+    { name: '上海',     latitude: 31.2304, longitude: 121.4737, province: '上海市' },
+    { name: '广州',     latitude: 23.1291, longitude: 113.2644, province: '广东省' },
+    { name: '深圳',     latitude: 22.5431, longitude: 114.0579, province: '广东省' },
+    { name: '天津',     latitude: 39.3434, longitude: 117.3616, province: '天津市' },
+    { name: '重庆',     latitude: 29.5630, longitude: 106.5516, province: '重庆市' },
+    { name: '成都',     latitude: 30.5728, longitude: 104.0668, province: '四川省' },
+    { name: '杭州',     latitude: 30.2741, longitude: 120.1551, province: '浙江省' },
+    { name: '武汉',     latitude: 30.5928, longitude: 114.3055, province: '湖北省' },
+    { name: '西安',     latitude: 34.3416, longitude: 108.9398, province: '陕西省' },
+    { name: '南京',     latitude: 32.0603, longitude: 118.7969, province: '江苏省' },
+    { name: '苏州',     latitude: 31.2989, longitude: 120.5853, province: '江苏省' },
+    { name: '长沙',     latitude: 28.2282, longitude: 112.9388, province: '湖南省' },
+    { name: '青岛',     latitude: 36.0671, longitude: 120.3826, province: '山东省' },
+    { name: '郑州',     latitude: 34.7466, longitude: 113.6254, province: '河南省' },
+    { name: '大连',     latitude: 38.9140, longitude: 121.6147, province: '辽宁省' },
+    { name: '宁波',     latitude: 29.8683, longitude: 121.5440, province: '浙江省' },
+    { name: '厦门',     latitude: 24.4798, longitude: 118.0894, province: '福建省' },
+    { name: '福州',     latitude: 26.0745, longitude: 119.2965, province: '福建省' },
+    { name: '济南',     latitude: 36.6512, longitude: 117.1201, province: '山东省' },
+    { name: '合肥',     latitude: 31.8206, longitude: 117.2272, province: '安徽省' },
+    { name: '昆明',     latitude: 25.0389, longitude: 102.7183, province: '云南省' },
+    { name: '哈尔滨',   latitude: 45.8038, longitude: 126.5349, province: '黑龙江省' },
+    { name: '沈阳',     latitude: 41.8057, longitude: 123.4315, province: '辽宁省' },
+    { name: '长春',     latitude: 43.8171, longitude: 125.3235, province: '吉林省' },
+    { name: '石家庄',   latitude: 38.0428, longitude: 114.5149, province: '河北省' },
+    { name: '太原',     latitude: 37.8706, longitude: 112.5489, province: '山西省' },
+    { name: '南昌',     latitude: 28.6820, longitude: 115.8579, province: '江西省' },
+    { name: '贵阳',     latitude: 26.6470, longitude: 106.6302, province: '贵州省' },
+    { name: '南宁',     latitude: 22.8170, longitude: 108.3665, province: '广西壮族自治区' },
+    { name: '海口',     latitude: 20.0444, longitude: 110.1999, province: '海南省' },
+    { name: '兰州',     latitude: 36.0611, longitude: 103.8343, province: '甘肃省' },
+    { name: '西宁',     latitude: 36.6171, longitude: 101.7782, province: '青海省' },
+    { name: '银川',     latitude: 38.4872, longitude: 106.2309, province: '宁夏回族自治区' },
+    { name: '乌鲁木齐', latitude: 43.8256, longitude: 87.6168, province: '新疆维吾尔自治区' },
+    { name: '拉萨',     latitude: 29.6500, longitude: 91.1000, province: '西藏自治区' },
+    { name: '呼和浩特', latitude: 40.8414, longitude: 111.7519, province: '内蒙古自治区' },
+    { name: '香港',     latitude: 22.3193, longitude: 114.1694, province: '香港特别行政区' },
+    { name: '澳门',     latitude: 22.1987, longitude: 113.5439, province: '澳门特别行政区' },
+    { name: '台北',     latitude: 25.0330, longitude: 121.5654, province: '台湾省' },
+    { name: '新北',     latitude: 25.0169, longitude: 121.4628, province: '台湾省' },
+    { name: '桃园',     latitude: 24.9937, longitude: 121.3010, province: '台湾省' },
+    { name: '台中',     latitude: 24.1477, longitude: 120.6736, province: '台湾省' },
+    { name: '台南',     latitude: 22.9998, longitude: 120.2269, province: '台湾省' },
+    { name: '高雄',     latitude: 22.6273, longitude: 120.3014, province: '台湾省' },
+    { name: '基隆',     latitude: 25.1276, longitude: 121.7392, province: '台湾省' },
+    { name: '新竹',     latitude: 24.8138, longitude: 120.9675, province: '台湾省' },
+    { name: '嘉义',     latitude: 23.4801, longitude: 120.4491, province: '台湾省' },
+    { name: '花莲',     latitude: 23.9911, longitude: 121.6112, province: '台湾省' },
+    { name: '台东',     latitude: 22.7554, longitude: 121.1500, province: '台湾省' },
+    { name: '宜兰',     latitude: 24.7021, longitude: 121.7378, province: '台湾省' },
+    { name: '屏东',     latitude: 22.5519, longitude: 120.5487, province: '台湾省' },
+    { name: '云林',     latitude: 23.7092, longitude: 120.4313, province: '台湾省' },
+    { name: '苗栗',     latitude: 24.5602, longitude: 120.8214, province: '台湾省' },
+    { name: '彰化',     latitude: 24.0759, longitude: 120.5440, province: '台湾省' },
+    { name: '南投',     latitude: 23.9609, longitude: 120.9718, province: '台湾省' }
+];
+
+function searchCityLocal(kw) {
+    const results = document.getElementById('searchResults');
+    const matches = FALLBACK_CITIES.filter(c =>
+        c.name.includes(kw) || c.province.includes(kw)
+    ).slice(0, 10);
+
+    if (matches.length === 0) {
+        results.innerHTML = '<div style="padding:16px; text-align:center; color:var(--md-sys-color-on-surface-variant); font-size:13px;">没有找到，去设置里填高德 Key 可搜全国县级市</div>';
+        return;
+    }
+
+    results.innerHTML = '';
+    matches.forEach(r => {
+        const item = document.createElement('div');
+        item.className = 'search-result-item';
+        item.innerHTML = `
+            <div>${escapeHtml(r.name)}</div>
+            <div class="search-sub">${escapeHtml(r.province)}</div>
+        `;
+        item.onclick = () => {
+            currentCity = { name: r.name, latitude: r.latitude, longitude: r.longitude };
+            settings.city = currentCity;
+            localStorage.setItem('md3_weather_settings', JSON.stringify(settings));
+            closeCitySearch();
+            loadWeather();
+        };
+        results.appendChild(item);
+    });
+}
+
+// ================= 设置 =================
+function initSettingsUI() {
+    document.querySelectorAll('#tempUnitSelector md-filter-chip').forEach(el => {
+        el.selected = (el.dataset.unit === settings.tempUnit);
+    });
+    document.querySelectorAll('#windUnitSelector md-filter-chip').forEach(el => {
+        el.selected = (el.dataset.unit === settings.windUnit);
+    });
+    const hint = document.getElementById('defaultCityHint');
+    if (hint) hint.textContent = `当前：${currentCity.name}`;
+    const keyInput = document.getElementById('amapKeyInput');
+    if (keyInput) keyInput.value = settings.amapKey || '';
+}
+
+function openSettings() {
+    initSettingsUI();
+    document.getElementById('settingsOverlay').classList.add('show');
+}
+
+function closeSettings() {
+    const keyInput = document.getElementById('amapKeyInput');
+    if (keyInput) {
+        settings.amapKey = keyInput.value.trim();
+        localStorage.setItem('md3_weather_settings', JSON.stringify(settings));
+    }
+    document.getElementById('settingsOverlay').classList.remove('show');
+}
+
+function selectTempUnit(unit) {
+    settings.tempUnit = unit;
+    localStorage.setItem('md3_weather_settings', JSON.stringify(settings));
+    initSettingsUI();
+    loadWeather();
+}
+
+function selectWindUnit(unit) {
+    settings.windUnit = unit;
+    localStorage.setItem('md3_weather_settings', JSON.stringify(settings));
+    initSettingsUI();
+    loadWeather();
+}
+
+function resetToDefault() {
+    currentCity = DEFAULT_CITY;
+    settings.city = DEFAULT_CITY;
+    localStorage.setItem('md3_weather_settings', JSON.stringify(settings));
+    closeSettings();
+    loadWeather();
+}
+
+// ================= 工具 =================
+function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+}
+</script>
+
+</body>
+</html>

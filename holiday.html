@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>节假日日历</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+<script type="importmap">
+    { "imports": { "@material/web/": "https://esm.sh/@material/web@2.0.0/" } }
+</script>
+<script type="module">
+    import '@material/web/all.js';
+</script>
+<style>
+:root {
+    --md-sys-color-primary: #6750A4;
+    --md-sys-color-on-primary: #FFFFFF;
+    --md-sys-color-primary-container: #EADDFF;
+    --md-sys-color-on-primary-container: #21005D;
+    --md-sys-color-secondary-container: #E8DEF8;
+    --md-sys-color-on-secondary-container: #1D192B;
+    --md-sys-color-surface: #FEF7FF;
+    --md-sys-color-on-surface: #1D1B20;
+    --md-sys-color-surface-container: #F3EDF7;
+    --md-sys-color-surface-container-high: #ECE6F0;
+    --md-sys-color-on-surface-variant: #49454F;
+    --md-sys-color-outline: #79747E;
+    --md-sys-color-outline-variant: #CAC4D0;
+    --md-sys-color-error: #B3261E;
+    --app-font-family: 'Google Sans', 'Roboto', 'Noto Sans SC', system-ui, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--app-font-family); -webkit-tap-highlight-color: transparent; }
+body { background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 32px; }
+
+.top-app-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px;
+    position: sticky; top: 0;
+    background: var(--md-sys-color-surface);
+    z-index: 30;
+    min-height: 64px;
+}
+.app-title { font-size: 22px; font-weight: 500; display: flex; align-items: center; gap: 8px; line-height: 28px; }
+.app-title .material-symbols-outlined { color: var(--md-sys-color-primary); font-size: 24px; font-variation-settings: 'FILL' 1; }
+.top-actions { display: flex; align-items: center; gap: 4px; }
+
+.main-content { flex: 1; padding: 0 16px; max-width: 800px; margin: 0 auto; width: 100%; }
+
+/* 年份切换 */
+.year-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 0 16px;
+}
+.year-display {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--md-sys-color-on-surface);
+}
+
+/* 图例 */
+.legend {
+    display: flex;
+    gap: 16px;
+    padding: 0 0 16px;
+    font-size: 12px;
+    color: var(--md-sys-color-on-surface-variant);
+    flex-wrap: wrap;
+}
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+.legend-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 4px;
+}
+
+/* 月份卡片 */
+.month-card {
+    background: var(--md-sys-color-surface-container);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 12px;
+    animation: fadeIn 0.3s ease;
+}
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.month-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.month-title .month-hint {
+    font-size: 12px;
+    font-weight: 400;
+    color: var(--md-sys-color-on-surface-variant);
+}
+
+/* 日历网格 */
+.cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 4px;
+}
+.cal-header {
+    text-align: center;
+    font-size: 11px;
+    color: var(--md-sys-color-on-surface-variant);
+    padding: 4px 0;
+    font-weight: 500;
+}
+.cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.15s;
+    position: relative;
+    color: var(--md-sys-color-on-surface);
+}
+.cal-day.empty { cursor: default; }
+
+/* 日期类型颜色 */
+.cal-day.weekday { background: transparent; }
+.cal-day.weekend { background: #FFF3E0; color: #E65100; }
+.cal-day.holiday { background: #FFCDD2; color: #B71C1C; font-weight: 600; }
+.cal-day.workday { background: #E0E0E0; color: #757575; }
+.cal-day.today { border: 2px solid var(--md-sys-color-primary); }
+
+.cal-day:hover:not(.empty) {
+    transform: scale(1.05);
+}
+
+.cal-day .day-label {
+    font-size: 9px;
+    line-height: 10px;
+    margin-top: 1px;
+    opacity: 0.8;
+}
+
+/* 详情弹窗 */
+.detail-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.32);
+    z-index: 300;
+    display: none; align-items: flex-end; justify-content: center;
+}
+.detail-overlay.show { display: flex; }
+
+.detail-sheet {
+    background: var(--md-sys-color-surface);
+    width: 100%; max-width: 600px;
+    border-top-left-radius: 28px;
+    border-top-right-radius: 28px;
+    padding: 24px 24px calc(24px + env(safe-area-inset-bottom, 0px));
+    animation: sheetUp 0.3s cubic-bezier(0.2, 0, 0, 1) forwards;
+    transform: translateY(100%);
+}
+@keyframes sheetUp { to { transform: translateY(0); } }
+
+.detail-sheet h3 {
+    font-size: 20px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+.detail-sheet .detail-date {
+    font-size: 14px;
+    color: var(--md-sys-color-on-surface-variant);
+    margin-bottom: 16px;
+}
+.detail-row {
+    display: flex;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+    font-size: 14px;
+}
+.detail-row:last-child { border-bottom: none; }
+.detail-label { color: var(--md-sys-color-on-surface-variant); flex-shrink: 0; min-width: 70px; }
+.detail-value { color: var(--md-sys-color-on-surface); }
+
+/* 加载 / 空状态 */
+.loading-center {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 60px 20px; gap: 16px;
+    color: var(--md-sys-color-on-surface-variant);
+    font-size: 14px;
+}
+.empty-state {
+    text-align: center; padding: 60px 20px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+.empty-state .material-symbols-outlined {
+    font-size: 64px;
+    color: var(--md-sys-color-outline-variant);
+    margin-bottom: 16px;
+}
+
+/* Toast */
+.toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1D1B20;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-size: 14px;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.toast.show { opacity: 1; }
+
+md-icon { font-family: 'Material Symbols Outlined'; font-size: 24px; display: inline-flex; align-items: center; justify-content: center; }
+</style>
+</head>
+<body>
+
+<header class="top-app-bar">
+    <div class="app-title">
+        <span class="material-symbols-outlined">calendar_month</span>
+        节假日日历
+    </div>
+    <div class="top-actions">
+        <md-icon-button onclick="loadYear(currentYear)" aria-label="刷新">
+            <md-icon>refresh</md-icon>
+        </md-icon-button>
+    </div>
+</header>
+
+<main class="main-content" id="mainContent">
+    <div class="loading-center">
+        <md-circular-progress indeterminate style="--md-circular-progress-size:32px;"></md-circular-progress>
+        <span>正在加载节假日数据…</span>
+    </div>
+</main>
+
+<!-- 详情弹窗 -->
+<div class="detail-overlay" id="detailOverlay">
+    <div class="detail-sheet" id="detailSheet">
+        <h3 id="detailTitle">日期详情</h3>
+        <div class="detail-date" id="detailDate"></div>
+        <div id="detailBody"></div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ================= 配置 =================
+const DATA_BASE = 'https://cdn.jsdelivr.net/gh/NateScarlet/holiday-cn@master/';
+
+let currentYear = new Date().getFullYear();
+let holidayData = {};   // { year: [ { date, name, isOffDay } ] }
+
+// ================= 初始化 =================
+document.addEventListener('DOMContentLoaded', () => {
+    loadYear(currentYear);
+});
+
+// ================= 加载年份数据 =================
+async function loadYear(year) {
+    const main = document.getElementById('mainContent');
+    main.innerHTML = `
+        <div class="loading-center">
+            <md-circular-progress indeterminate style="--md-circular-progress-size:32px;"></md-circular-progress>
+            <span>正在加载 ${year} 年数据…</span>
+        </div>
+    `;
+
+    currentYear = year;
+
+    try {
+        // 缓存
+        if (!holidayData[year]) {
+            const url = DATA_BASE + year + '.json';
+            const res = await fetch(url);
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            holidayData[year] = data.days || [];
+        }
+
+        renderYear(year, holidayData[year]);
+    } catch (e) {
+        console.error(e);
+        main.innerHTML = `
+            <div class="empty-state">
+                <span class="material-symbols-outlined">cloud_off</span>
+                <h3>加载失败</h3>
+                <p>${escapeHtml(e.message)}</p>
+                <p style="font-size:12px; margin-top:8px; opacity:0.7;">可能该年份数据尚未发布</p>
+                <div style="margin-top:16px;">
+                    <md-outlined-button onclick="loadYear(${year})">
+                        <md-icon slot="icon">refresh</md-icon>
+                        重试
+                    </md-outlined-button>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// ================= 渲染年份 =================
+function renderYear(year, days) {
+    const main = document.getElementById('mainContent');
+    main.innerHTML = '';
+
+    // 年份导航
+    const nav = document.createElement('div');
+    nav.className = 'year-nav';
+    nav.innerHTML = `
+        <md-icon-button onclick="loadYear(${year - 1})">
+            <md-icon>chevron_left</md-icon>
+        </md-icon-button>
+        <div class="year-display">${year} 年</div>
+        <md-icon-button onclick="loadYear(${year + 1})">
+            <md-icon>chevron_right</md-icon>
+        </md-icon-button>
+    `;
+    main.appendChild(nav);
+
+    // 图例
+    const legend = document.createElement('div');
+    legend.className = 'legend';
+    legend.innerHTML = `
+        <div class="legend-item"><span class="legend-dot" style="background:#FFCDD2;"></span>法定节假日</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#FFF3E0;"></span>周末</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#E0E0E0;"></span>调休上班</div>
+        <div class="legend-item"><span class="legend-dot" style="background:transparent; border:2px solid #6750A4;"></span>今天</div>
+    `;
+    main.appendChild(legend);
+
+    // 构建日期查找表
+    const dayMap = {};
+    days.forEach(d => {
+        dayMap[d.date] = d;
+    });
+
+    const today = new Date();
+    const todayStr = formatDate(today);
+
+    // 按月渲染
+    for (let month = 0; month < 12; month++) {
+        const card = document.createElement('div');
+        card.className = 'month-card';
+
+        const monthName = `${month + 1} 月`;
+        let hint = '';
+
+        // 该月是否有节假日/调休
+        const monthHolidays = days.filter(d => {
+            const m = d.date.split('-')[1];
+            return parseInt(m) === month + 1;
+        });
+        const holidayNames = [...new Set(monthHolidays.filter(d => d.isOffDay && d.name).map(d => d.name))];
+        if (holidayNames.length > 0) {
+            hint = holidayNames.join(' · ');
+        }
+
+        let html = `
+            <div class="month-title">
+                <span>${monthName}</span>
+                ${hint ? `<span class="month-hint">${escapeHtml(hint)}</span>` : ''}
+            </div>
+            <div class="cal-grid">
+                <div class="cal-header">一</div>
+                <div class="cal-header">二</div>
+                <div class="cal-header">三</div>
+                <div class="cal-header">四</div>
+                <div class="cal-header">五</div>
+                <div class="cal-header">六</div>
+                <div class="cal-header">日</div>
+        `;
+
+        // 该月第一天
+        const firstDay = new Date(year, month, 1);
+        let startWeekday = firstDay.getDay(); // 0=周日
+        // 转成 周一=0 的索引
+        startWeekday = (startWeekday + 6) % 7;
+
+        // 该月天数
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+        // 空格填充
+        for (let i = 0; i < startWeekday; i++) {
+            html += `<div class="cal-day empty"></div>`;
+        }
+
+        // 日期
+        for (let d = 1; d <= daysInMonth; d++) {
+            const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+            const dateObj = new Date(year, month, d);
+            const weekday = dateObj.getDay();
+            const info = dayMap[dateStr];
+
+            let cls = 'cal-day';
+            let label = '';
+
+            if (info) {
+                if (info.isOffDay) {
+                    cls += ' holiday';
+                    if (info.name) label = info.name.replace(/假期|节$/, '').slice(0, 2);
+                } else {
+                    cls += ' workday';
+                    label = '班';
+                }
+            } else if (weekday === 0 || weekday === 6) {
+                cls += ' weekend';
+            } else {
+                cls += ' weekday';
+            }
+
+            if (dateStr === todayStr) cls += ' today';
+
+            html += `
+                <div class="${cls}" onclick="showDayDetail('${dateStr}')">
+                    <span>${d}</span>
+                    ${label ? `<span class="day-label">${escapeHtml(label)}</span>` : ''}
+                </div>
+            `;
+        }
+
+        html += `</div>`;
+        card.innerHTML = html;
+        main.appendChild(card);
+    }
+}
+
+// ================= 日期详情 =================
+function showDayDetail(dateStr) {
+    const overlay = document.getElementById('detailOverlay');
+    const title = document.getElementById('detailTitle');
+    const dateEl = document.getElementById('detailDate');
+    const body = document.getElementById('detailBody');
+
+    const info = (holidayData[currentYear] || []).find(d => d.date === dateStr);
+    const dateObj = new Date(dateStr + 'T00:00:00');
+    const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+    const weekday = weekdays[dateObj.getDay()];
+
+    const year = dateObj.getFullYear();
+    const month = dateObj.getMonth() + 1;
+    const day = dateObj.getDate();
+
+    dateEl.textContent = `${year}年${month}月${day}日 ${weekday}`;
+
+    let html = '';
+
+    if (info) {
+        if (info.isOffDay) {
+            title.textContent = info.name || '法定节假日';
+            html += `
+                <div class="detail-row">
+                    <div class="detail-label">类型</div>
+                    <div class="detail-value" style="color:#B71C1C; font-weight:600;">法定节假日</div>
+                </div>
+            `;
+        } else {
+            title.textContent = '调休上班';
+            html += `
+                <div class="detail-row">
+                    <div class="detail-label">类型</div>
+                    <div class="detail-value" style="color:#757575; font-weight:600;">调休上班日</div>
+                </div>
+            `;
+        }
+        if (info.name) {
+            html += `
+                <div class="detail-row">
+                    <div class="detail-label">名称</div>
+                    <div class="detail-value">${escapeHtml(info.name)}</div>
+                </div>
+            `;
+        }
+    } else {
+        const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+        title.textContent = isWeekend ? '周末' : '工作日';
+        html += `
+            <div class="detail-row">
+                <div class="detail-label">类型</div>
+                <div class="detail-value">${isWeekend ? '正常周末' : '正常工作日'}</div>
+            </div>
+        `;
+    }
+
+    body.innerHTML = html;
+    overlay.classList.add('show');
+
+    overlay.onclick = (e) => {
+        if (e.target === overlay) closeDetail();
+    };
+}
+
+function closeDetail() {
+    document.getElementById('detailOverlay').classList.remove('show');
+}
+
+// ================= 工具 =================
+function formatDate(d) {
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+}
+
+function showToast(msg) {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        toast.className = 'toast';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => toast.classList.remove('show'), 1800);
+}
+</script>
+
+</body>
+</html>

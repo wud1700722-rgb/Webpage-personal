@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>工具箱</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+<style>
+:root {
+    --md-sys-color-primary: #6750A4;
+    --md-sys-color-on-primary: #FFFFFF;
+    --md-sys-color-primary-container: #EADDFF;
+    --md-sys-color-on-primary-container: #21005D;
+    --md-sys-color-surface: #FEF7FF;
+    --md-sys-color-on-surface: #1D1B20;
+    --md-sys-color-surface-container: #F3EDF7;
+    --md-sys-color-surface-container-high: #ECE6F0;
+    --md-sys-color-on-surface-variant: #49454F;
+    --app-font-family: 'MyFont', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--app-font-family); -webkit-tap-highlight-color: transparent; }
+body { background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); min-height: 100vh; padding: 0 16px 32px; max-width: 900px; margin: 0 auto; }
+
+.header {
+    padding: 24px 0 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+.header .material-symbols-outlined {
+    font-size: 32px;
+    color: var(--md-sys-color-primary);
+    font-variation-settings: 'FILL' 1;
+}
+.header h1 {
+    font-size: 26px;
+    font-weight: 600;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 12px;
+}
+
+.card {
+    background: var(--md-sys-color-surface-container);
+    border-radius: 20px;
+    padding: 20px;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    transition: all 0.15s;
+    position: relative;
+    overflow: hidden;
+    min-height: 140px;
+}
+.card:hover { background: var(--md-sys-color-surface-container-high); }
+.card:active { transform: scale(0.98); }
+
+.card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--md-sys-color-primary-container);
+    color: var(--md-sys-color-on-primary-container);
+}
+.card-icon .material-symbols-outlined {
+    font-size: 26px;
+    font-variation-settings: 'FILL' 1;
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 22px;
+    margin-top: auto;
+}
+.card-desc {
+    font-size: 12px;
+    color: var(--md-sys-color-on-surface-variant);
+    line-height: 16px;
+}
+
+@font-face {
+    font-family: 'MyFont';
+    src: url('./fonts/111.ttf') format('truetype-variations');
+    font-weight: 100 900;   /* 如果字体支持字重轴 */
+    font-display: swap;
+}
+
+.element {
+    font-family: 'MyFont', system-ui, sans-serif;
+    font-variation-settings: 'ROND' 100;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+    <span class="material-symbols-outlined">apps</span>
+    <h1>工具箱</h1>
+</div>
+
+<div class="grid">
+    <a class="card" href="earthquake.html">
+        <div class="card-icon"><span class="material-symbols-outlined">public</span></div>
+        <div class="card-title">地震数据</div>
+        <div class="card-desc">CENC / JMA / CWA / 福建</div>
+    </a>
+
+    <a class="card" href="typhoon.html">
+        <div class="card-icon"><span class="material-symbols-outlined">cyclone</span></div>
+        <div class="card-title">台风数据</div>
+        <div class="card-desc">中央气象台 + 路径地图</div>
+    </a>
+
+    <a class="card" href="weather.html">
+        <div class="card-icon"><span class="material-symbols-outlined">wb_sunny</span></div>
+        <div class="card-title">天气</div>
+        <div class="card-desc">7 天预报 + 空气质量</div>
+    </a>
+
+    <a class="card" href="wallpaper.html">
+        <div class="card-icon"><span class="material-symbols-outlined">wallpaper</span></div>
+        <div class="card-title">必应壁纸</div>
+        <div class="card-desc">每日壁纸 + 历史</div>
+    </a>
+
+    <a class="card" href="checklist.html">
+        <div class="card-icon"><span class="material-symbols-outlined">checklist</span></div>
+        <div class="card-title">防灾清单</div>
+        <div class="card-desc">应急物资 + 成就</div>
+    </a>
+
+    <a class="card" href="holiday.html">
+        <div class="card-icon"><span class="material-symbols-outlined">calendar_month</span></div>
+        <div class="card-title">节假日日历</div>
+        <div class="card-desc">法定假日 + 调休</div>
+    </a>
+
+    <a class="card" href="search.html">
+        <div class="card-icon"><span class="material-symbols-outlined">travel_explore</span></div>
+        <div class="card-title">全国搜索</div>
+        <div class="card-desc">高德地图 + 路线</div>
+    </a>
+</div>
+
+</body>
+</html>

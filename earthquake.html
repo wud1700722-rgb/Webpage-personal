@@ -1,0 +1,1555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>地震数据</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200">
+<script type="importmap">
+    { "imports": { "@material/web/": "https://esm.sh/@material/web@2.0.0/" } }
+</script>
+<script type="module">
+    import '@material/web/all.js';
+</script>
+<style>
+:root {
+    --md-sys-color-primary: #6750A4;
+    --md-sys-color-on-primary: #FFFFFF;
+    --md-sys-color-primary-container: #EADDFF;
+    --md-sys-color-on-primary-container: #21005D;
+    --md-sys-color-secondary-container: #E8DEF8;
+    --md-sys-color-on-secondary-container: #1D192B;
+    --md-sys-color-surface: #FEF7FF;
+    --md-sys-color-on-surface: #1D1B20;
+    --md-sys-color-surface-container: #F3EDF7;
+    --md-sys-color-surface-container-high: #ECE6F0;
+    --md-sys-color-on-surface-variant: #49454F;
+    --md-sys-color-outline: #79747E;
+    --md-sys-color-outline-variant: #CAC4D0;
+    --md-sys-color-error: #B3261E;
+    --md-sys-shape-corner-small: 8px;
+    --md-sys-shape-corner-medium: 12px;
+    --md-sys-shape-corner-large: 16px;
+    --md-sys-shape-corner-extra-large: 28px;
+    --app-font-family: 'Google Sans', 'Roboto', 'Noto Sans SC', 'Noto Sans JP', system-ui, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: var(--app-font-family); -webkit-tap-highlight-color: transparent; }
+body { background: var(--md-sys-color-surface); color: var(--md-sys-color-on-surface); min-height: 100vh; display: flex; flex-direction: column; padding-bottom: 32px; }
+body.no-scroll { overflow: hidden; }
+
+.top-app-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px;
+    position: sticky; top: 0;
+    background: var(--md-sys-color-surface);
+    z-index: 30;
+    min-height: 64px;
+}
+.top-left { display: flex; align-items: center; gap: 4px; }
+.app-title { font-size: 22px; font-weight: 500; display: flex; align-items: center; gap: 8px; line-height: 28px; }
+.app-title .material-symbols-outlined { color: var(--md-sys-color-primary); font-size: 24px; font-variation-settings: 'FILL' 1; }
+.top-actions { display: flex; align-items: center; gap: 4px; }
+
+.source-chips {
+    display: flex;
+    gap: 8px;
+    padding: 0 16px 12px;
+    max-width: 800px;
+    margin: 0 auto;
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.source-chips::-webkit-scrollbar { display: none; }
+
+/* ===== 通用横幅样式 ===== */
+.eew-banner {
+    display: none;
+    margin: 0 16px 12px;
+    max-width: 768px;
+    padding: 16px 20px;
+    border-radius: 16px;
+    color: white;
+}
+.eew-banner.show { display: block; }
+.eew-banner .eew-title {
+    font-size: 16px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 8px;
+    line-height: 24px;
+}
+.eew-banner .eew-info { font-size: 14px; line-height: 20px; }
+.eew-banner .eew-info strong { font-weight: 600; }
+
+/* 地震：红色 */
+#eewBanner {
+    background: linear-gradient(135deg, #B3261E, #7F0000);
+    animation: pulse 1.5s infinite;
+}
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(179,38,30,0.5); }
+    50% { box-shadow: 0 0 0 8px rgba(179,38,30,0); }
+}
+
+/* 海啸：蓝色 */
+#tsunamiBanner {
+    background: linear-gradient(135deg, #0D47A1, #1565C0, #1E88E5);
+    animation: pulseTsunami 1.5s infinite;
+}
+@keyframes pulseTsunami {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(21,101,192,0.5); }
+    50% { box-shadow: 0 0 0 10px rgba(21,101,192,0); }
+}
+
+/* 火山：橙色 */
+#volcanoBanner {
+    background: linear-gradient(135deg, #E65100, #BF360C);
+    animation: pulseVolcano 1.5s infinite;
+}
+@keyframes pulseVolcano {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(230,81,0,0.5); }
+    50% { box-shadow: 0 0 0 10px rgba(230,81,0,0); }
+}
+
+.filter-panel {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: var(--md-sys-color-surface-container);
+    z-index: 25;
+    padding: 0 20px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s cubic-bezier(0.2, 0, 0, 1),
+                padding 0.35s cubic-bezier(0.2, 0, 0, 1);
+    box-shadow: 0 4px 12px rgba(0,0,0,0);
+}
+.filter-panel.open {
+    max-height: 240px;
+    padding: 76px 20px 20px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-bottom-left-radius: var(--md-sys-shape-corner-large);
+    border-bottom-right-radius: var(--md-sys-shape-corner-large);
+}
+.filter-title {
+    font-size: 12px;
+    color: var(--md-sys-color-on-surface-variant);
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 6px;
+    line-height: 16px;
+    letter-spacing: 0.5px;
+}
+.filter-title .material-symbols-outlined { font-size: 16px; }
+.filter-chips { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
+.filter-chips::-webkit-scrollbar { display: none; }
+
+.main-content { flex: 1; padding: 0 16px; max-width: 800px; margin: 0 auto; width: 100%; }
+.count-bar {
+    text-align: center;
+    font-size: 12px;
+    color: var(--md-sys-color-on-surface-variant);
+    padding: 8px 0 12px;
+    opacity: 0.7;
+    line-height: 16px;
+}
+
+.quake-card {
+    position: relative;
+    background: var(--md-sys-color-surface-container);
+    border-radius: var(--md-sys-shape-corner-large);
+    padding: 16px;
+    margin-bottom: 12px;
+    display: flex;
+    gap: 14px;
+    align-items: center;
+    cursor: pointer;
+    transition: background 0.15s;
+    animation: fadeIn 0.3s ease;
+    overflow: hidden;
+}
+.quake-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--md-sys-color-on-surface);
+    opacity: 0;
+    transition: opacity 0.15s;
+    pointer-events: none;
+    border-radius: inherit;
+}
+.quake-card:hover::before { opacity: 0.08; }
+.quake-card:active::before { opacity: 0.12; }
+.quake-card:hover { background: var(--md-sys-color-surface-container-high); }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+.mag-box {
+    width: 92px; height: 92px;
+    border-radius: 20px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    flex-shrink: 0; user-select: none; text-align: center; line-height: 1;
+    position: relative;
+    z-index: 1;
+}
+.mag-box .mag-num { font-size: 32px; font-weight: 700; line-height: 1; letter-spacing: -1px; display: block; }
+.mag-box .mag-unit { font-size: 14px; line-height: 16px; margin-top: 2px; opacity: 0.75; display: block; }
+
+.quake-body { flex: 1; min-width: 0; position: relative; z-index: 1; }
+.quake-title { font-size: 15px; font-weight: 500; color: var(--md-sys-color-on-surface); line-height: 22px; margin-bottom: 8px; word-break: break-word; }
+
+.info-row { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: var(--md-sys-color-on-surface-variant); line-height: 18px; margin-bottom: 4px; }
+.info-row:last-child { margin-bottom: 0; }
+.info-row .info-text { flex: 1; word-break: break-word; }
+.info-row .info-icon {
+    font-size: 15px;
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: var(--md-sys-color-on-surface-variant);
+}
+.info-row .info-icon.colored { color: var(--md-sys-color-primary); }
+
+.loading-center { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; gap: 16px; color: var(--md-sys-color-on-surface-variant); font-size: 14px; }
+.empty-state { text-align: center; padding: 60px 20px; color: var(--md-sys-color-on-surface-variant); }
+.empty-state .material-symbols-outlined { font-size: 64px; color: var(--md-sys-color-outline-variant); margin-bottom: 16px; }
+.empty-state h3 { font-size: 16px; margin-bottom: 8px; color: var(--md-sys-color-on-surface); font-weight: 500; }
+
+.detail-overlay {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.32);
+    z-index: 300;
+    display: none; align-items: flex-end; justify-content: center;
+}
+.detail-overlay.show { display: flex; }
+
+.detail-sheet {
+    background: var(--md-sys-color-surface);
+    width: 100%; max-width: 600px; max-height: 88vh;
+    border-top-left-radius: 28px; border-top-right-radius: 28px;
+    display: flex; flex-direction: column;
+    transform: translateY(100%);
+    animation: sheetUp 0.35s cubic-bezier(0.2, 0, 0, 1) forwards;
+    overflow: hidden;
+    transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+.detail-sheet.dragging { transition: none; }
+.detail-sheet.closing { animation: sheetDown 0.3s cubic-bezier(0.4, 0, 1, 1) forwards; }
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes sheetDown { from { transform: translateY(0); } to { transform: translateY(100%); } }
+
+.detail-handle {
+    width: 100%;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    cursor: grab;
+    touch-action: none;
+}
+.detail-handle::before {
+    content: '';
+    width: 40px;
+    height: 4px;
+    background: var(--md-sys-color-outline-variant);
+    border-radius: 2px;
+    display: block;
+}
+.detail-handle:active { cursor: grabbing; }
+
+.detail-header { display: flex; align-items: center; justify-content: space-between; padding: 0 16px 4px; flex-shrink: 0; }
+.detail-title-text { font-size: 16px; font-weight: 500; color: var(--md-sys-color-on-surface); line-height: 24px; }
+.detail-content { flex: 1; overflow-y: auto; padding: 8px 20px 32px; }
+.detail-hero { display: flex; justify-content: center; padding: 8px 0 20px; }
+.detail-hero .mag-box { width: 110px; height: 110px; border-radius: 24px; }
+.detail-hero .mag-box .mag-num { font-size: 40px; }
+.detail-hero .mag-box .mag-unit { font-size: 14px; }
+.detail-field {
+    display: flex; gap: 10px;
+    padding: 12px 0;
+    font-size: 14px; line-height: 20px; align-items: flex-start;
+    border-bottom: 1px solid var(--md-sys-color-outline-variant);
+}
+.detail-field:last-child { border-bottom: none; }
+.detail-field .field-label { color: var(--md-sys-color-on-surface-variant); flex-shrink: 0; min-width: 80px; }
+.detail-field .field-value { color: var(--md-sys-color-on-surface); flex: 1; word-break: break-word; }
+
+.full-screen-settings {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--md-sys-color-surface); z-index: 400;
+    display: none; flex-direction: column;
+    overflow: hidden;
+}
+.full-screen-settings.show {
+    display: flex;
+    animation: sheetUp 0.35s cubic-bezier(0.2, 0, 0, 1) forwards;
+}
+.full-screen-settings.closing {
+    animation: sheetDown 0.3s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+.settings-top-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 8px 12px; flex-shrink: 0;
+    min-height: 64px;
+}
+.settings-top-bar .title { font-size: 22px; font-weight: 500; line-height: 28px; }
+.settings-content {
+    flex: 1; overflow-y: auto;
+    padding: 16px 24px 120px 24px;
+    display: flex; flex-direction: column; gap: 24px;
+}
+.md-input-group { display: flex; flex-direction: column; gap: 8px; }
+.md-input-group label { font-size: 14px; font-weight: 500; color: var(--md-sys-color-on-surface-variant); line-height: 20px; }
+.md-input-group .hint { font-size: 12px; color: var(--md-sys-color-on-surface-variant); line-height: 16px; }
+.switch-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; min-height: 48px; }
+.switch-row span { font-size: 14px; line-height: 20px; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.disclaimer {
+    background: var(--md-sys-color-surface-container);
+    border-radius: var(--md-sys-shape-corner-medium);
+    padding: 16px; font-size: 14px;
+    color: var(--md-sys-color-on-surface-variant); line-height: 20px;
+}
+.disclaimer strong { color: var(--md-sys-color-error); display: block; margin-bottom: 6px; font-size: 14px; }
+
+/* Toast */
+.toast {
+    position: fixed;
+    bottom: 100px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #1D1B20;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-size: 14px;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+.toast.show { opacity: 1; }
+
+md-icon { font-family: 'Material Symbols Outlined'; font-size: 24px; display: inline-flex; align-items: center; justify-content: center; }
+</style>
+</head>
+<body>
+
+<header class="top-app-bar">
+    <div class="top-left">
+        <md-icon-button onclick="toggleFilter()" id="filterBtn" aria-label="筛选">
+            <md-icon>filter_alt</md-icon>
+        </md-icon-button>
+        <div class="app-title">
+            <span class="material-symbols-outlined">public</span>
+            地震数据
+        </div>
+    </div>
+    <div class="top-actions">
+        <md-icon-button onclick="loadAll()" aria-label="刷新">
+            <md-icon>refresh</md-icon>
+        </md-icon-button>
+        <md-icon-button onclick="openSettings()" aria-label="设置">
+            <md-icon>settings</md-icon>
+        </md-icon-button>
+    </div>
+</header>
+
+<!-- 三个独立横幅 -->
+<div class="eew-banner" id="eewBanner">
+    <div class="eew-title">
+        <span class="material-symbols-outlined" style="font-size:20px;">warning</span>
+        <span id="eewSource">紧急地震速报</span>
+    </div>
+    <div class="eew-info" id="eewInfo"></div>
+</div>
+
+<div class="eew-banner" id="tsunamiBanner">
+    <div class="eew-title">
+        <span class="material-symbols-outlined" style="font-size:20px;">waves</span>
+        <span id="tsunamiSource">海啸预警</span>
+    </div>
+    <div class="eew-info" id="tsunamiInfo"></div>
+</div>
+
+<div class="eew-banner" id="volcanoBanner">
+    <div class="eew-title">
+        <span class="material-symbols-outlined" style="font-size:20px;">volcano</span>
+        <span id="volcanoSource">火山预警</span>
+    </div>
+    <div class="eew-info" id="volcanoInfo"></div>
+</div>
+
+<div class="source-chips" id="sourceChips"></div>
+
+<div class="filter-panel" id="filterPanel">
+    <div class="filter-title">
+        <span class="material-symbols-outlined">filter_alt</span>
+        按震级筛选（点击切换 / 长按自定义）
+    </div>
+    <div class="filter-chips" id="filterChips"></div>
+</div>
+
+<main class="main-content" id="mainContent">
+    <div class="loading-center">
+        <md-circular-progress indeterminate style="--md-circular-progress-size:32px;"></md-circular-progress>
+        <span>正在加载地震数据…</span>
+    </div>
+</main>
+
+<div class="detail-overlay" id="detailOverlay">
+    <div class="detail-sheet" id="detailSheet">
+        <div class="detail-handle"></div>
+        <div class="detail-header">
+            <span class="detail-title-text">详情</span>
+            <md-icon-button onclick="closeDetail()" aria-label="关闭">
+                <md-icon>close</md-icon>
+            </md-icon-button>
+        </div>
+        <div class="detail-content" id="detailContent"></div>
+    </div>
+</div>
+
+<div class="full-screen-settings" id="settingsOverlay">
+    <div class="settings-top-bar">
+        <span style="width:48px"></span>
+        <span class="title">设置</span>
+        <md-icon-button onclick="closeSettings()" aria-label="关闭">
+            <md-icon>close</md-icon>
+        </md-icon-button>
+    </div>
+    <div class="settings-content">
+        <div class="disclaimer">
+            <strong>免责声明</strong>
+            本页数据来自中国地震台网（CENC）、日本气象厅（JMA）、台湾气象署（CWA）等公开镜像（Wolfx），仅供参考。<br>
+            正式信息请以官方发布为准，本页不对因数据误差导致的任何后果负责。
+        </div>
+
+        <div class="md-input-group">
+            <label>卡片布局模板</label>
+            <div class="chip-row" id="templateSelector">
+                <md-filter-chip data-tpl="minimal" label="极简" onclick="selectTemplate('minimal')"></md-filter-chip>
+                <md-filter-chip data-tpl="standard" label="标准" onclick="selectTemplate('standard')"></md-filter-chip>
+                <md-filter-chip data-tpl="full" label="完整" onclick="selectTemplate('full')"></md-filter-chip>
+                <md-filter-chip data-tpl="custom" label="自定义" onclick="selectTemplate('custom')"></md-filter-chip>
+            </div>
+        </div>
+
+        <div class="md-input-group" id="customFieldsGroup" style="display:none;">
+            <label>自定义字段</label>
+            <div class="switch-row">
+                <span>发震时间</span>
+                <md-switch id="fieldTime" icons onchange="onFieldToggle()"></md-switch>
+            </div>
+            <div class="switch-row">
+                <span>参考位置</span>
+                <md-switch id="fieldPlace" icons onchange="onFieldToggle()"></md-switch>
+            </div>
+            <div class="switch-row">
+                <span>深度与坐标</span>
+                <md-switch id="fieldCoord" icons onchange="onFieldToggle()"></md-switch>
+            </div>
+            <div class="switch-row">
+                <span>事件编号</span>
+                <md-switch id="fieldNo" icons onchange="onFieldToggle()"></md-switch>
+            </div>
+            <div class="switch-row">
+                <span>烈度</span>
+                <md-switch id="fieldIntensity" icons onchange="onFieldToggle()"></md-switch>
+            </div>
+        </div>
+
+        <div class="md-input-group">
+            <label>编辑样式</label>
+            <div class="switch-row">
+                <span>根据震级更换色块颜色</span>
+                <md-switch id="magColorSwitch" icons onchange="autoSaveSettings()"></md-switch>
+            </div>
+            <div class="switch-row">
+                <span>显示地震编号</span>
+                <md-switch id="showNoSwitch" icons onchange="autoSaveSettings()"></md-switch>
+            </div>
+            <div class="switch-row">
+                <span>显示信息行图标</span>
+                <md-switch id="iconsSwitch" icons onchange="autoSaveSettings()"></md-switch>
+            </div>
+            <div class="switch-row">
+                <span>图标上色</span>
+                <md-switch id="colorIconsSwitch" icons onchange="autoSaveSettings()"></md-switch>
+            </div>
+            <div class="hint">
+                震级色块配色：<br>
+                &lt; 3 灰 · 3-4 蓝 · 4-5 绿 · 5-6 橙 · 6-7 红 · ≥ 7 深红
+            </div>
+        </div>
+
+        <div class="md-input-group">
+            <label>测试</label>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <md-outlined-button onclick="testTsunamiBanner()">
+                    <md-icon slot="icon">waves</md-icon>
+                    测试海啸横幅
+                </md-outlined-button>
+                <md-outlined-button onclick="testVolcanoBanner()">
+                    <md-icon slot="icon">volcano</md-icon>
+                    测试火山横幅
+                </md-outlined-button>
+                <md-outlined-button onclick="clearAllBanners()">
+                    <md-icon slot="icon">close</md-icon>
+                    清除所有横幅
+                </md-outlined-button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ================= 配置 =================
+const SOURCES = {
+    cenc: {
+        name: '中国地震台网',
+        listUrl: 'https://api.wolfx.jp/cenc_eqlist.json',
+        eewUrl: 'https://api.wolfx.jp/cenc_eew.json',
+        region: 'cn'
+    },
+    jma: {
+        name: '日本气象厅',
+        listUrl: 'https://api.wolfx.jp/jma_eqlist.json',
+        eewUrl: 'https://api.wolfx.jp/jma_eew.json',
+        region: 'jp'
+    },
+    cwa: {
+        name: '中央气象署',
+        listUrl: null,
+        eewUrl: 'https://api.wolfx.jp/cwa_eew.json',
+        region: 'tw'
+    },
+    tsunami: {
+        name: '海啸预警',
+        listUrl: null,
+        eewUrl: null,
+        region: 'tsunami'
+    },
+    volcano: {
+        name: '火山预警',
+        listUrl: 'volcano',
+        eewUrl: null,
+        region: 'volcano'
+    }
+};
+
+const DEFAULT_SETTINGS = {
+    magColor: true,
+    showNo: false,
+    cardTemplate: 'standard',
+    cardFields: { time: true, place: true, coord: true, no: false, intensity: false },
+    icons: true,
+    colorIcons: true
+};
+
+let saved = {};
+try { saved = JSON.parse(localStorage.getItem('md3_quake_settings')) || {}; } catch (e) {}
+
+let settings = {
+    ...DEFAULT_SETTINGS,
+    ...saved,
+    cardFields: { ...DEFAULT_SETTINGS.cardFields, ...(saved.cardFields || {}) }
+};
+
+let currentSource = localStorage.getItem('md3_quake_source') || 'cenc';
+let currentFilter = null;
+let customFilter = null;
+let allQuakes = [];
+
+// ================= 初始化 =================
+document.addEventListener('DOMContentLoaded', () => {
+    initSettingsUI();
+    renderSourceChips();
+    renderFilterChips();
+    loadAll();
+    connectTsunamiWs();
+    initDetailDrag();
+    startBannerCleanup();
+});
+
+function initSettingsUI() {
+    document.getElementById('magColorSwitch').selected = !!settings.magColor;
+    document.getElementById('showNoSwitch').selected = !!settings.showNo;
+    document.getElementById('iconsSwitch').selected = !!settings.icons;
+    document.getElementById('colorIconsSwitch').selected = !!settings.colorIcons;
+
+    const tpl = settings.cardTemplate || 'standard';
+    document.querySelectorAll('#templateSelector md-filter-chip').forEach(el => {
+        el.selected = (el.dataset.tpl === tpl);
+    });
+    document.getElementById('customFieldsGroup').style.display =
+        settings.cardTemplate === 'custom' ? 'flex' : 'none';
+
+    const f = settings.cardFields || {};
+    document.getElementById('fieldTime').selected = !!f.time;
+    document.getElementById('fieldPlace').selected = !!f.place;
+    document.getElementById('fieldCoord').selected = !!f.coord;
+    document.getElementById('fieldNo').selected = !!f.no;
+    document.getElementById('fieldIntensity').selected = !!f.intensity;
+}
+
+// ================= 数据源切换 =================
+function renderSourceChips() {
+    const wrap = document.getElementById('sourceChips');
+    wrap.innerHTML = '';
+    Object.keys(SOURCES).forEach(key => {
+        const chip = document.createElement('md-filter-chip');
+        chip.label = SOURCES[key].name;
+        chip.selected = currentSource === key;
+        chip.dataset.source = key;
+        chip.onclick = () => {
+            currentSource = key;
+            localStorage.setItem('md3_quake_source', key);
+            renderSourceChips();
+            loadAll();
+        };
+        wrap.appendChild(chip);
+    });
+}
+
+// ================= 统一刷新入口 =================
+function loadAll() {
+    checkEEW();
+    loadEarthquakes();
+}
+
+// ================= 地震速报（地震专用横幅） =================
+async function checkEEW() {
+    const banner = document.getElementById('eewBanner');
+    const info = document.getElementById('eewInfo');
+    const sourceLabel = document.getElementById('eewSource');
+
+    // 只清地震横幅，不动海啸和火山
+    banner.classList.remove('show');
+
+    const src = SOURCES[currentSource];
+    if (!src.eewUrl) return;
+
+    try {
+        const res = await fetch(src.eewUrl + '?t=' + Date.now());
+        if (!res.ok) return;
+        const data = await res.json();
+
+        if (!data || (!data.EventID && !data.ID)) return;
+
+        const timeStr = data.ReportTime || data.AnnouncedTime || data.OriginTime || '';
+        if (timeStr) {
+            const t = new Date(timeStr.replace(/\//g, '-')).getTime();
+            if (!isNaN(t) && Date.now() - t > 30 * 60 * 1000) return;
+        }
+
+        if (currentSource === 'cenc') {
+            sourceLabel.textContent = '中国地震预警';
+            info.innerHTML = `
+                <div><strong>${escapeHtml(data.HypoCenter || '未知位置')}</strong> · M${escapeHtml(String(data.Magnitude || '?'))}</div>
+                <div>发震：${escapeHtml(formatChineseTime(data.OriginTime || data.ReportTime))}</div>
+                <div>深度：${escapeHtml(String(data.Depth ?? '?'))} km · 最大烈度：${escapeHtml(String(data.MaxIntensity ?? '?'))}</div>
+            `;
+        } else if (currentSource === 'jma') {
+            sourceLabel.textContent = '紧急地震速报';
+            const sea = data.isSea ? '海域' : '陆地';
+            const flags = [];
+            if (data.isFinal) flags.push('最终报');
+            if (data.isCancel) flags.push('已取消');
+            if (data.isTraining) flags.push('训练');
+            info.innerHTML = `
+                <div><strong>${escapeHtml(data.Hypocenter || '不明')}</strong> · M${escapeHtml(String(data.Magnitude || '?'))} · 最大震度 ${escapeHtml(String(data.MaxIntensity || '?'))}</div>
+                <div>发震：${escapeHtml(formatChineseTime(data.OriginTime || data.AnnouncedTime))}</div>
+                <div>深度：${escapeHtml(String(data.Depth ?? '?'))} km · ${sea}${flags.length ? ' · ' + flags.join(' · ') : ''}</div>
+            `;
+        } else if (currentSource === 'cwa') {
+            sourceLabel.textContent = '台湾气象署地震预警';
+            info.innerHTML = `
+                <div><strong>${escapeHtml(data.HypoCenter || '不明')}</strong> · M${escapeHtml(String(data.Magnitude || '?'))} · 最大震度 ${escapeHtml(String(data.MaxIntensity || '?'))}</div>
+                <div>发震：${escapeHtml(formatChineseTime(data.OriginTime || data.ReportTime))}</div>
+                <div>深度：${escapeHtml(String(data.Depth ?? '?'))} km${data.ReportNum ? ' · 第 ' + data.ReportNum + ' 报' : ''}</div>
+            `;
+        }
+        banner.classList.add('show');
+    } catch (e) {
+        // 静默
+    }
+}
+
+// ================= 筛选面板 =================
+function toggleFilter() {
+    const panel = document.getElementById('filterPanel');
+    const btn = document.getElementById('filterBtn');
+    const isOpen = panel.classList.toggle('open');
+    btn.querySelector('md-icon').textContent = isOpen ? 'filter_alt_off' : 'filter_alt';
+}
+
+const FILTER_LEVELS = [1, 2, 3, 4, 5, 6, 7];
+
+function renderFilterChips() {
+    const bar = document.getElementById('filterChips');
+    bar.innerHTML = '';
+
+    const allChip = document.createElement('md-filter-chip');
+    allChip.label = '全部';
+    allChip.selected = (currentFilter === null && customFilter === null);
+    allChip.onclick = () => { currentFilter = null; customFilter = null; renderFilterChips(); applyFilter(); };
+    bar.appendChild(allChip);
+
+    FILTER_LEVELS.forEach(lv => {
+        const chip = document.createElement('md-filter-chip');
+        chip.label = `≥${lv}.0`;
+        chip.selected = (currentFilter === lv && customFilter === null);
+        chip.onclick = () => {
+            currentFilter = lv;
+            customFilter = null;
+            renderFilterChips();
+            applyFilter();
+        };
+        let pressTimer = null;
+        const startPress = () => { pressTimer = setTimeout(() => openCustomFilter(lv), 600); };
+        const cancelPress = () => clearTimeout(pressTimer);
+        chip.addEventListener('touchstart', startPress, { passive: true });
+        chip.addEventListener('touchend', cancelPress);
+        chip.addEventListener('touchmove', cancelPress);
+        chip.addEventListener('mousedown', startPress);
+        chip.addEventListener('mouseup', cancelPress);
+        chip.addEventListener('mouseleave', cancelPress);
+        bar.appendChild(chip);
+    });
+
+    if (customFilter !== null) {
+        const chip = document.createElement('md-filter-chip');
+        chip.label = `≥${customFilter.toFixed(1)}`;
+        chip.selected = true;
+        chip.onclick = () => { currentFilter = null; customFilter = null; renderFilterChips(); applyFilter(); };
+        bar.appendChild(chip);
+    }
+}
+
+function openCustomFilter(defaultVal) {
+    const v = prompt('输入最小震级（如 5.5）', String(defaultVal || '5.5'));
+    if (v === null) return;
+    const n = parseFloat(v);
+    if (isNaN(n) || n < 0 || n > 12) {
+        alert('请输入 0 到 12 之间的数字');
+        return;
+    }
+    currentFilter = null;
+    customFilter = Math.round(n * 10) / 10;
+    renderFilterChips();
+    applyFilter();
+}
+
+function applyFilter() {
+    let filtered = allQuakes;
+    if (currentFilter !== null) {
+        filtered = filtered.filter(q => parseFloat(q.magnitude) >= currentFilter);
+    } else if (customFilter !== null) {
+        filtered = filtered.filter(q => parseFloat(q.magnitude) >= customFilter);
+    }
+    renderEarthquakes(filtered);
+}
+
+// ================= 加载列表 =================
+async function loadEarthquakes() {
+    const main = document.getElementById('mainContent');
+    main.innerHTML = `
+        <div class="loading-center">
+            <md-circular-progress indeterminate style="--md-circular-progress-size:32px;"></md-circular-progress>
+            <span>正在加载数据…</span>
+        </div>
+    `;
+
+    const src = SOURCES[currentSource];
+
+    if (currentSource === 'tsunami') {
+        renderTsunamiList();
+        return;
+    }
+
+    if (currentSource === 'volcano') {
+        renderVolcanoList();
+        return;
+    }
+
+    if (!src.listUrl) {
+        main.innerHTML = `
+            <div class="empty-state">
+                <span class="material-symbols-outlined">info</span>
+                <h3>${escapeHtml(src.name)}</h3>
+                <p>仅提供实时预警，无历史列表</p>
+                <p style="font-size:12px; margin-top:8px; opacity:0.7;">如有实时地震，顶部红色横幅会显示</p>
+            </div>
+        `;
+        return;
+    }
+
+    try {
+        const res = await fetch(src.listUrl + '?t=' + Date.now());
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+
+        const list = Object.keys(data)
+            .filter(k => /^No\d+$/.test(k) && data[k] && typeof data[k] === 'object')
+            .map(k => ({ ...data[k], _no: parseInt(k.replace('No', '')) || 0 }))
+            .sort((a, b) => a._no - b._no);
+
+        if (list.length === 0) {
+            main.innerHTML = `<div class="empty-state"><span class="material-symbols-outlined">search_off</span><h3>暂无数据</h3></div>`;
+            return;
+        }
+
+        allQuakes = list;
+        applyFilter();
+    } catch (e) {
+        console.error(e);
+        main.innerHTML = `
+            <div class="empty-state">
+                <span class="material-symbols-outlined">cloud_off</span>
+                <h3>加载失败</h3>
+                <p>${escapeHtml(e.message)}</p>
+                <div style="margin-top:16px;">
+                    <md-outlined-button onclick="loadEarthquakes()">
+                        <md-icon slot="icon">refresh</md-icon>
+                        重试
+                    </md-outlined-button>
+                </div>
+            </div>
+        `;
+    }
+}
+
+// ================= 震级配色 =================
+function getMagStyle(mag) {
+    const m = parseFloat(mag);
+    if (isNaN(m)) return { bg: '#E0E0E0', fg: '#1D1B20' };
+    if (m < 3) return { bg: '#E0E0E0', fg: '#1D1B20' };
+    if (m < 4) return { bg: '#BBDEFB', fg: '#0D47A1' };
+    if (m < 5) return { bg: '#C8E6C9', fg: '#1B5E20' };
+    if (m < 6) return { bg: '#FFE0B2', fg: '#E65100' };
+    if (m < 7) return { bg: '#FFCDD2', fg: '#B71C1C' };
+    return { bg: '#B71C1C', fg: '#FFFFFF' };
+}
+
+// ================= 火山配色 =================
+function getVolcanoStyle(level) {
+    if (level >= 5) return { bg: '#B71C1C', fg: '#FFFFFF' };
+    if (level === 4) return { bg: '#FFCDD2', fg: '#B71C1C' };
+    if (level === 3) return { bg: '#FFE0B2', fg: '#E65100' };
+    if (level === 2) return { bg: '#FFF9C4', fg: '#827717' };
+    return { bg: '#C8E6C9', fg: '#1B5E20' };
+}
+
+// ================= 列表渲染 =================
+function renderEarthquakes(list) {
+    const main = document.getElementById('mainContent');
+    main.innerHTML = '';
+
+    let countText = `共 ${list.length} 条记录`;
+    if (currentFilter !== null) countText += `（已筛选 ≥${currentFilter}.0）`;
+    else if (customFilter !== null) countText += `（已筛选 ≥${customFilter.toFixed(1)}）`;
+
+    const countBar = document.createElement('div');
+    countBar.className = 'count-bar';
+    countBar.textContent = countText;
+    main.appendChild(countBar);
+
+    if (list.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.innerHTML = `<span class="material-symbols-outlined">search_off</span><p>没有符合条件的记录</p>`;
+        main.appendChild(empty);
+        return;
+    }
+
+    list.forEach(q => {
+        main.appendChild(buildQuakeCard(q));
+    });
+}
+
+// ================= 海啸列表 =================
+function renderTsunamiList() {
+    const main = document.getElementById('mainContent');
+    main.innerHTML = '';
+
+    const countBar = document.createElement('div');
+    countBar.className = 'count-bar';
+    countBar.textContent = '实时海啸预警（P2P 推送）';
+    main.appendChild(countBar);
+
+    if (latestTsunami) {
+        const card = document.createElement('div');
+        card.className = 'quake-card';
+        card.style.background = 'linear-gradient(135deg, #0D47A1, #1565C0)';
+        card.style.color = 'white';
+
+        card.innerHTML = `
+            <div class="mag-box" style="background:#BBDEFB; color:#0D47A1;">
+                <div class="mag-num" style="font-size:28px;">🌊</div>
+                <div class="mag-unit">海啸</div>
+            </div>
+            <div class="quake-body">
+                <div class="quake-title" style="color:white;">${escapeHtml(latestTsunami.gradeText || '海啸预警')}</div>
+                <div class="info-row" style="color:rgba(255,255,255,0.85);">
+                    <span class="material-symbols-outlined info-icon" style="color:rgba(255,255,255,0.85);">schedule</span>
+                    <span class="info-text">时间：${escapeHtml(latestTsunami.time || '')}</span>
+                </div>
+                <div class="info-row" style="color:rgba(255,255,255,0.85);">
+                    <span class="material-symbols-outlined info-icon" style="color:rgba(255,255,255,0.85);">location_on</span>
+                    <span class="info-text">影响海域：${escapeHtml(latestTsunami.range || '')}</span>
+                </div>
+            </div>
+        `;
+        main.appendChild(card);
+    } else {
+        const empty = document.createElement('div');
+        empty.className = 'empty-state';
+        empty.innerHTML = `
+            <span class="material-symbols-outlined">waves</span>
+            <h3>当前无海啸预警</h3>
+            <p style="font-size:13px; margin-top:8px; opacity:0.7;">有海啸时会自动显示在顶部</p>
+        `;
+        main.appendChild(empty);
+    }
+}
+
+// ================= 火山列表（假数据占位） =================
+function renderVolcanoList() {
+    const main = document.getElementById('mainContent');
+    main.innerHTML = '';
+
+    const countBar = document.createElement('div');
+    countBar.className = 'count-bar';
+    countBar.textContent = '火山预警（示例数据）';
+    main.appendChild(countBar);
+
+    const mockVolcanoes = [
+        {
+            name: '樱岛',
+            enname: 'Sakurajima',
+            level: 3,
+            levelText: '入山限制',
+            time: '2026-09-14 08:00',
+            desc: '喷火警戒 Level 3，火山口周边 2km 禁止入内'
+        },
+        {
+            name: '阿苏山',
+            enname: 'Aso',
+            level: 2,
+            levelText: '火口周边管制',
+            time: '2026-09-13 12:00',
+            desc: '喷火警戒 Level 2，火山口周边 1km 禁止入内'
+        }
+    ];
+
+    mockVolcanoes.forEach(v => {
+        const card = document.createElement('div');
+        card.className = 'quake-card';
+
+        const style = getVolcanoStyle(v.level);
+
+        card.innerHTML = `
+            <div class="mag-box" style="background:${style.bg}; color:${style.fg};">
+                <div class="mag-num">L${v.level}</div>
+                <div class="mag-unit">警戒</div>
+            </div>
+            <div class="quake-body">
+                <div class="quake-title">${escapeHtml(v.name)} · ${escapeHtml(v.enname)}</div>
+                <div class="info-row">
+                    <span class="material-symbols-outlined info-icon">warning</span>
+                    <span class="info-text">${escapeHtml(v.levelText)}</span>
+                </div>
+                <div class="info-row">
+                    <span class="material-symbols-outlined info-icon">schedule</span>
+                    <span class="info-text">${escapeHtml(v.time)}</span>
+                </div>
+                <div class="info-row">
+                    <span class="material-symbols-outlined info-icon">info</span>
+                    <span class="info-text">${escapeHtml(v.desc)}</span>
+                </div>
+            </div>
+        `;
+        card.onclick = () => openVolcanoDetail(v);
+        main.appendChild(card);
+    });
+}
+
+// ================= 地震卡片 =================
+function buildQuakeCard(q) {
+    const card = document.createElement('div');
+    card.className = 'quake-card';
+
+    const style = settings.magColor
+        ? getMagStyle(q.magnitude)
+        : { bg: 'var(--md-sys-color-primary-container)', fg: 'var(--md-sys-color-on-primary-container)' };
+
+    const f = settings.cardFields || {};
+    const showIcon = settings.icons;
+    const iconClass = settings.colorIcons ? 'info-icon colored' : 'info-icon';
+
+    const isCenc = currentSource === 'cenc';
+
+    const time  = isCenc ? (q.time || '') : (q.time_full || q.time || '');
+    const mag   = q.magnitude || '';
+    const place = isCenc ? (q.placeName || q.location || '') : (q.location || '');
+    const depth = q.depth || '';
+    const lat   = q.latitude || '';
+    const lng   = q.longitude || '';
+    const shindo = q.shindo || '';
+    const intensity = q.intensity || '';
+
+    const magText = mag ? `${escapeHtml(String(mag))}级地震` : '地震';
+
+    let rows = '';
+
+    if (f.time && time) {
+        rows += `
+            <div class="info-row">
+                ${showIcon ? `<span class="material-symbols-outlined ${iconClass}">schedule</span>` : ''}
+                <span class="info-text"><strong>发震时间</strong>：${escapeHtml(time)}</span>
+            </div>`;
+    }
+
+    if (f.place && place) {
+        rows += `
+            <div class="info-row">
+                ${showIcon ? `<span class="material-symbols-outlined ${iconClass}">location_on</span>` : ''}
+                <span class="info-text"><strong>${isCenc ? '参考位置' : '震源地'}</strong>：${escapeHtml(place)}</span>
+            </div>`;
+    }
+
+    if (f.coord) {
+        const depthShort = depth ? `${parseFloat(depth) || depth} km` : '';
+        const lngText = lng !== '' && lng != null ? `${escapeHtml(String(lng))}°E` : '';
+        const latText = lat !== '' && lat != null ? `${escapeHtml(String(lat))}°N` : '';
+
+        const parts = [];
+        if (depthShort) parts.push(depthShort);
+        if (!isCenc && shindo) parts.push(`最大震度 ${escapeHtml(shindo)}`);
+        if (lngText) parts.push(lngText);
+        if (latText) parts.push(latText);
+
+        const coordText = parts.join(' ');
+
+        rows += `
+            <div class="info-row">
+                ${showIcon ? `<span class="material-symbols-outlined ${iconClass}">sensors</span>` : ''}
+                <span class="info-text">${coordText}</span>
+            </div>`;
+    }
+
+    if (f.no && q._no) {
+        rows += `
+            <div class="info-row">
+                ${showIcon ? `<span class="material-symbols-outlined ${iconClass}">tag</span>` : ''}
+                <span class="info-text"><strong>编号</strong>：第 ${q._no} 号</span>
+            </div>`;
+    }
+
+    if (f.intensity && intensity) {
+        rows += `
+            <div class="info-row">
+                ${showIcon ? `<span class="material-symbols-outlined ${iconClass}">bolt</span>` : ''}
+                <span class="info-text"><strong>烈度</strong>：${escapeHtml(String(intensity))}</span>
+            </div>`;
+    }
+
+    card.innerHTML = `
+        <div class="mag-box" style="background:${style.bg}; color:${style.fg};">
+            <div class="mag-num">${escapeHtml(String(mag) || '—')}</div>
+            <div class="mag-unit">级</div>
+        </div>
+        <div class="quake-body">
+            <div class="quake-title">${escapeHtml(place || '未知位置')}${magText}</div>
+            ${rows}
+        </div>
+    `;
+
+    card.onclick = () => openDetail(q);
+    return card;
+}
+
+// ================= 地震详情 =================
+function openDetail(q) {
+    document.body.classList.add('no-scroll');
+
+    const overlay = document.getElementById('detailOverlay');
+    const sheet = document.getElementById('detailSheet');
+    const content = document.getElementById('detailContent');
+
+    overlay.classList.remove('closing');
+    sheet.classList.remove('closing');
+    sheet.style.animation = '';
+    sheet.style.transform = '';
+
+    const style = settings.magColor
+        ? getMagStyle(q.magnitude)
+        : { bg: 'var(--md-sys-color-primary-container)', fg: 'var(--md-sys-color-on-primary-container)' };
+
+    content.innerHTML = buildDetailFields(q, style);
+    overlay.classList.add('show');
+
+    overlay.onclick = (e) => {
+        if (e.target === overlay) closeDetail();
+    };
+}
+
+function closeDetail() {
+    const overlay = document.getElementById('detailOverlay');
+    const sheet = document.getElementById('detailSheet');
+
+    sheet.classList.add('closing');
+
+    setTimeout(() => {
+        overlay.classList.remove('show');
+        sheet.classList.remove('closing');
+        sheet.style.transform = '';
+        sheet.style.animation = '';
+        document.body.classList.remove('no-scroll');
+    }, 300);
+}
+
+function buildDetailFields(q, style) {
+    let html = `
+        <div class="detail-hero">
+            <div class="mag-box" style="background:${style.bg}; color:${style.fg};">
+                <div class="mag-num">${escapeHtml(String(q.magnitude) || '?')}</div>
+                <div class="mag-unit">${currentSource === 'cenc' ? '级' : '震级'}</div>
+            </div>
+        </div>
+    `;
+
+    if (currentSource === 'cenc') {
+        if (q._no) html += fieldRow('编号', `第 ${q._no} 号`);
+        if (q.intensity) html += fieldRow('烈度', String(q.intensity));
+        if (q.time) html += fieldRow('发震时间', formatChineseTime(q.time));
+        if (q.ReportTime) html += fieldRow('发布时间', formatChineseTime(q.ReportTime));
+        if (q.type) html += fieldRow('数据状态', translateType(q.type));
+        html += fieldRow('事件类型', '天然地震');
+        if (q.longitude !== undefined) html += fieldRow('经度', `${q.longitude}°E`);
+        if (q.latitude !== undefined) html += fieldRow('纬度', `${q.latitude}°N`);
+        if (q.depth !== undefined) html += fieldRow('震源深度', formatDepth(q.depth));
+        const place = q.placeName || q.location;
+        if (place) html += fieldRow('震中位置', place);
+        if (q.EventID) html += fieldRow('事件 ID', String(q.EventID));
+    } else {
+        if (q._no) html += fieldRow('编号', `第 ${q._no} 号`);
+        if (q.Title) html += fieldRow('情报类型', String(q.Title));
+        if (q.time_full) html += fieldRow('发震时间', String(q.time_full));
+        if (q.location) html += fieldRow('震源地', String(q.location));
+        if (q.magnitude) html += fieldRow('震级', `M${q.magnitude}`);
+        if (q.shindo) html += fieldRow('最大震度', String(q.shindo));
+        if (q.depth) html += fieldRow('震源深度', String(q.depth));
+        if (q.latitude !== undefined) html += fieldRow('纬度', `${q.latitude}°N`);
+        if (q.longitude !== undefined) html += fieldRow('经度', `${q.longitude}°E`);
+        if (q.EventID) html += fieldRow('事件 ID', String(q.EventID));
+        if (q.info) html += fieldRow('海啸情报', String(q.info));
+    }
+
+    return html;
+}
+
+// ================= 火山详情 =================
+function openVolcanoDetail(v) {
+    document.body.classList.add('no-scroll');
+
+    const overlay = document.getElementById('detailOverlay');
+    const sheet = document.getElementById('detailSheet');
+    const content = document.getElementById('detailContent');
+
+    overlay.classList.remove('closing');
+    sheet.classList.remove('closing');
+    sheet.style.animation = '';
+    sheet.style.transform = '';
+
+    const style = getVolcanoStyle(v.level);
+
+    let html = `
+        <div class="detail-hero">
+            <div class="mag-box" style="background:${style.bg}; color:${style.fg};">
+                <div class="mag-num">L${v.level}</div>
+                <div class="mag-unit">警戒</div>
+            </div>
+        </div>
+    `;
+
+    html += fieldRow('火山名称', v.name);
+    if (v.enname) html += fieldRow('英文名', v.enname);
+    html += fieldRow('警戒级别', `Level ${v.level}`);
+    html += fieldRow('状态', v.levelText);
+    if (v.time) html += fieldRow('更新时间', v.time);
+    if (v.desc) html += fieldRow('详细说明', v.desc);
+
+    content.innerHTML = html;
+    overlay.classList.add('show');
+
+    overlay.onclick = (e) => {
+        if (e.target === overlay) closeDetail();
+    };
+}
+
+function fieldRow(label, value) {
+    return `
+        <div class="detail-field">
+            <div class="field-label">${escapeHtml(label)}</div>
+            <div class="field-value">${escapeHtml(value)}</div>
+        </div>
+    `;
+}
+
+// ================= 工具函数 =================
+function formatDepth(raw) {
+    if (raw === undefined || raw === null || raw === '') return '';
+    const s = String(raw).trim();
+    const unitMatch = s.match(/^([\d.]+)\s*(km|KM|Km|千米|公里|m|M|米)$/);
+    if (unitMatch) {
+        const num = parseFloat(unitMatch[1]);
+        const unit = unitMatch[2];
+        if (/^(km|KM|Km|千米|公里)$/.test(unit)) return `${num} 千米（km）`;
+        if (/^(m|M|米)$/.test(unit)) return `${num} 米（m）`;
+    }
+    const num = parseFloat(s);
+    if (!isNaN(num)) return `${num} 千米（km）`;
+    return s;
+}
+
+function formatChineseTime(str) {
+    if (!str) return '';
+    const m = String(str).match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})\s+(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?/);
+    if (!m) return str;
+    const sec = m[6] || '00';
+    return `${parseInt(m[1])}年${parseInt(m[2])}月${parseInt(m[3])}日 ${m[4]}时${m[5]}分${sec}秒`;
+}
+
+function translateType(type) {
+    if (!type) return '';
+    const map = {
+        reviewed: '正式测定',
+        automatic: '自动测定',
+        preliminary: '初步测定'
+    };
+    return map[type] || type;
+}
+
+function escapeHtml(s) {
+    return String(s || '').replace(/[&<>"']/g, c => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[c]));
+}
+
+// ================= 设置 =================
+function openSettings() {
+    document.body.classList.add('no-scroll');
+    initSettingsUI();
+    document.getElementById('settingsOverlay').classList.add('show');
+}
+
+function closeSettings() {
+    const overlay = document.getElementById('settingsOverlay');
+    overlay.classList.add('closing');
+    setTimeout(() => {
+        overlay.classList.remove('show');
+        overlay.classList.remove('closing');
+        document.body.classList.remove('no-scroll');
+    }, 300);
+}
+
+function autoSaveSettings() {
+    settings.magColor = document.getElementById('magColorSwitch').selected;
+    settings.showNo = document.getElementById('showNoSwitch').selected;
+    settings.icons = document.getElementById('iconsSwitch').selected;
+    settings.colorIcons = document.getElementById('colorIconsSwitch').selected;
+    localStorage.setItem('md3_quake_settings', JSON.stringify(settings));
+    applyFilter();
+}
+
+function selectTemplate(tpl) {
+    settings.cardTemplate = tpl;
+
+    if (tpl === 'minimal') {
+        settings.cardFields = { time: false, place: true, coord: false, no: false, intensity: false };
+    } else if (tpl === 'standard') {
+        settings.cardFields = { time: true, place: true, coord: true, no: false, intensity: false };
+    } else if (tpl === 'full') {
+        settings.cardFields = { time: true, place: true, coord: true, no: true, intensity: true };
+    }
+
+    localStorage.setItem('md3_quake_settings', JSON.stringify(settings));
+    initSettingsUI();
+    applyFilter();
+}
+
+function onFieldToggle() {
+    settings.cardTemplate = 'custom';
+    settings.cardFields = {
+        time: document.getElementById('fieldTime').selected,
+        place: document.getElementById('fieldPlace').selected,
+        coord: document.getElementById('fieldCoord').selected,
+        no: document.getElementById('fieldNo').selected,
+        intensity: document.getElementById('fieldIntensity').selected
+    };
+    localStorage.setItem('md3_quake_settings', JSON.stringify(settings));
+    initSettingsUI();
+    applyFilter();
+}
+
+// ================= 详情拖拽 =================
+function initDetailDrag() {
+    const sheet = document.getElementById('detailSheet');
+    const handle = sheet.querySelector('.detail-handle');
+    if (!handle) return;
+
+    let startY = 0;
+    let currentY = 0;
+    let dragging = false;
+
+    const onStart = (clientY) => {
+        if (sheet.classList.contains('closing')) return;
+        dragging = true;
+        startY = clientY;
+        currentY = 0;
+        sheet.classList.add('dragging');
+        sheet.style.animation = 'none';
+    };
+
+    const onMove = (clientY) => {
+        if (!dragging) return;
+        currentY = Math.max(0, clientY - startY);
+        sheet.style.transform = `translateY(${currentY}px)`;
+    };
+
+    const onEnd = () => {
+        if (!dragging) return;
+        dragging = false;
+        sheet.classList.remove('dragging');
+        sheet.style.animation = '';
+
+        if (currentY > 100) {
+            sheet.style.transform = '';
+            closeDetail();
+        } else {
+            sheet.style.transform = 'translateY(0)';
+            setTimeout(() => {
+                if (!sheet.classList.contains('closing')) {
+                    sheet.style.transform = '';
+                }
+            }, 260);
+        }
+        currentY = 0;
+    };
+
+    handle.addEventListener('touchstart', (e) => onStart(e.touches[0].clientY), { passive: true });
+    handle.addEventListener('touchmove', (e) => onMove(e.touches[0].clientY), { passive: true });
+    handle.addEventListener('touchend', onEnd);
+
+    handle.addEventListener('mousedown', (e) => {
+        onStart(e.clientY);
+        const move = (ev) => onMove(ev.clientY);
+        const up = () => {
+            onEnd();
+            document.removeEventListener('mousemove', move);
+            document.removeEventListener('mouseup', up);
+        };
+        document.addEventListener('mousemove', move);
+        document.addEventListener('mouseup', up);
+    });
+}
+
+// ================= 海啸预警 (P2P) =================
+let tsunamiWs = null;
+let tsunamiReconnectTimer = null;
+let latestTsunami = null;
+let latestTsunamiTime = 0;
+let latestVolcano = null;
+let latestVolcanoTime = 0;
+
+const BANNER_TTL = 10 * 60 * 1000;  // 10 分钟
+
+function connectTsunamiWs() {
+    if (tsunamiWs && tsunamiWs.readyState === WebSocket.OPEN) return;
+    try {
+        tsunamiWs = new WebSocket('wss://api.p2pquake.net/v2/ws');
+
+        tsunamiWs.onopen = () => {
+            console.log('海啸 WS 已连接');
+            if (tsunamiReconnectTimer) { clearTimeout(tsunamiReconnectTimer); tsunamiReconnectTimer = null; }
+        };
+
+        tsunamiWs.onmessage = (event) => {
+            try {
+                const data = JSON.parse(event.data);
+                if (data.code === 552) handleTsunami(data);
+            } catch (e) { /* 忽略 */ }
+        };
+
+        tsunamiWs.onclose = () => {
+            tsunamiWs = null;
+            if (!tsunamiReconnectTimer) {
+                tsunamiReconnectTimer = setTimeout(connectTsunamiWs, 5000);
+            }
+        };
+
+        tsunamiWs.onerror = () => { try { tsunamiWs.close(); } catch (e) {} };
+    } catch (e) {
+        console.error('海啸 WS 连接失败', e);
+    }
+}
+
+function handleTsunami(data) {
+    const tsunami = data.tsunami || {};
+    const areas = tsunami.areas || [];
+    const grade = tsunami.grade || 'Unknown';
+    const issueTime = data.time || new Date().toLocaleString('zh-CN', { hour12: false });
+    const areaNames = areas.map(a => a.name).filter(Boolean).join('、') || '未知海域';
+
+    const gradeText = {
+        'MajorWarning': '大海啸警报',
+        'Warning': '海啸警报',
+        'Watch': '海啸注意报',
+        'Unknown': '海啸预报'
+    }[grade] || '海啸预报';
+
+    latestTsunami = {
+        source: '海啸预警',
+        time: issueTime,
+        placeName: areaNames,
+        magnitude: '—',
+        depth: '',
+        range: areaNames,
+        gradeText: gradeText,
+        type: 'tsunami'
+    };
+
+    latestTsunamiTime = Date.now();
+    renderTsunamiBanner(latestTsunami);
+
+    if (currentSource === 'tsunami') {
+        renderTsunamiList();
+    }
+}
+
+function renderTsunamiBanner(t) {
+    const banner = document.getElementById('tsunamiBanner');
+    const info = document.getElementById('tsunamiInfo');
+    const sourceLabel = document.getElementById('tsunamiSource');
+
+    banner.classList.add('show');
+    sourceLabel.textContent = t.source;
+    info.innerHTML = `
+        <div><strong>${escapeHtml(t.gradeText)}</strong></div>
+        <div>时间：${escapeHtml(t.time)}</div>
+        <div>影响海域：${escapeHtml(t.range)}</div>
+    `;
+}
+
+// ================= 火山横幅 =================
+function renderVolcanoBanner(v) {
+    const banner = document.getElementById('volcanoBanner');
+    const info = document.getElementById('volcanoInfo');
+    const sourceLabel = document.getElementById('volcanoSource');
+
+    banner.classList.add('show');
+    sourceLabel.textContent = '火山预警';
+    info.innerHTML = `
+        <div><strong>${escapeHtml(v.name)}</strong> · ${escapeHtml(v.levelText)}</div>
+        <div>级别：Level ${v.level}</div>
+        <div>${escapeHtml(v.desc)}</div>
+    `;
+}
+
+// ================= 测试按钮 =================
+function testTsunamiBanner() {
+    const now = new Date();
+    const timeStr = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ` +
+                    `${String(now.getHours()).padStart(2, '0')}时${String(now.getMinutes()).padStart(2, '0')}分` +
+                    `${String(now.getSeconds()).padStart(2, '0')}秒`;
+
+    latestTsunami = {
+        source: '海啸预警（测试）',
+        time: timeStr,
+        placeName: '福建沿海、台湾海峡',
+        magnitude: '—',
+        depth: '',
+        range: '福建沿海、台湾海峡、东海',
+        gradeText: '海啸警报（测试）',
+        type: 'tsunami'
+    };
+    latestTsunamiTime = Date.now();
+    renderTsunamiBanner(latestTsunami);
+
+    if (currentSource === 'tsunami') renderTsunamiList();
+    showToast('已触发测试海啸');
+}
+
+function testVolcanoBanner() {
+    const now = new Date();
+    const timeStr = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日 ` +
+                    `${String(now.getHours()).padStart(2, '0')}时${String(now.getMinutes()).padStart(2, '0')}分` +
+                    `${String(now.getSeconds()).padStart(2, '0')}秒`;
+
+    latestVolcano = {
+        name: '樱岛',
+        level: 3,
+        levelText: '入山限制',
+        time: timeStr,
+        desc: '喷火警戒 Level 3，火山口周边 2km 禁止入内'
+    };
+    latestVolcanoTime = Date.now();
+    renderVolcanoBanner(latestVolcano);
+    showToast('已触发测试火山');
+}
+
+// ================= 横幅清理 =================
+function startBannerCleanup() {
+    setInterval(() => {
+        const now = Date.now();
+
+        if (latestTsunami && now - latestTsunamiTime > BANNER_TTL) {
+            document.getElementById('tsunamiBanner').classList.remove('show');
+            latestTsunami = null;
+            if (currentSource === 'tsunami') renderTsunamiList();
+        }
+
+        if (latestVolcano && now - latestVolcanoTime > BANNER_TTL) {
+            document.getElementById('volcanoBanner').classList.remove('show');
+            latestVolcano = null;
+        }
+    }, 30 * 1000);
+}
+
+function clearAllBanners() {
+    document.getElementById('eewBanner').classList.remove('show');
+    document.getElementById('tsunamiBanner').classList.remove('show');
+    document.getElementById('volcanoBanner').classList.remove('show');
+    latestTsunami = null;
+    latestVolcano = null;
+    if (currentSource === 'tsunami') renderTsunamiList();
+    showToast('已清除所有横幅');
+}
+
+// ================= Toast =================
+function showToast(msg) {
+    let toast = document.getElementById('toast');
+    if (!toast) {
+        toast = document.createElement('div');
+        toast.id = 'toast';
+        toast.className = 'toast';
+        document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toast._timer);
+    toast._timer = setTimeout(() => toast.classList.remove('show'), 1800);
+}
+</script>
+
+</body>
+</html>
